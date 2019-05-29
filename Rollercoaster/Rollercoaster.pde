@@ -51,10 +51,21 @@ void runStartMenu(){
 }
 
 void runBuildStage(){
+  String[] tracks = {"Straight Track", "Curved Track", "Loop", "Spring"};
   colorMode(HSB,360,100,100);
   background(200, 18, 100);
   colorMode(RGB,255,255,255);
-  int buttonHeight = 750, gap = 50;
+  int buttonHeight = 750, gap = 60;
+  int buttonWidth = (1800 - 5 * gap) / 4;
+  checkMouseOnSquare();
+  generateScreen();
+  
+}
+
+void checkMouseOnSquare(){
+  String[] tracks = {"Straight Track", "Curved Track", "Loop", "Spring"};
+  
+   int buttonHeight = 750, gap = 60;
   int buttonWidth = (1800 - 5 * gap) / 4;
   int mouseOver = 0;
   
@@ -63,7 +74,7 @@ void runBuildStage(){
       mouseOver = i;
     }
   }
-  
+  textAlign(CENTER, TOP);
   if(mouseOver != 0){
     for(int i = gap; i < 1800; i+=buttonWidth + gap){
       if(i == mouseOver){
@@ -76,15 +87,28 @@ void runBuildStage(){
         stroke(202,184,255);
         rect(i, buttonHeight, buttonWidth, 125, 25);
       }
+      fill(255,255,255);
+      text(tracks[ (i - gap) / (buttonWidth + gap) ], i + (buttonWidth/2), buttonHeight);
     }
   }
   else{
     for(int i = gap; i < 1800; i+=buttonWidth + gap){
+
       fill(202,184,255);
       stroke(202,184,255);
       rect(i, buttonHeight, buttonWidth, 125, 25);
+      fill(255,255,255);
+      text(tracks[ (i - gap) / (buttonWidth + gap) ], i + (buttonWidth/2), buttonHeight);
+      
     }
   }
+}
+
+void generateScreen(){
+  int gap = 60;
+  fill(255);
+  stroke(255);
+  rect(gap, gap, 1680, 630, 25); 
 }
 
 void runSimulation(){

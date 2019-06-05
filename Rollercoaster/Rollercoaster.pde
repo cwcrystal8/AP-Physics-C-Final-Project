@@ -19,7 +19,7 @@ int currentPage; //0 is start menu, 1 is build stage, 2 is simulation, 3 is how 
 int trackToConfirm; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 int currentTrack; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 boolean trackConfirmed = false;
-Object[] allTracks = ;
+Object[] allTracks;
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 

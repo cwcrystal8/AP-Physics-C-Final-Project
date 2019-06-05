@@ -1,7 +1,6 @@
 import java.util.*;
 
-int currentPage; //0 is start menu, 1 is build stage, 2 is simulation 
-int currentTrack; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
+//CONSTANTS
 PFont myFont;
 int gap = 40;
 int buttonHeightStart = 750;
@@ -13,15 +12,21 @@ String[][] tracksDescription = { {"Please select a starting point", "Please sele
                                  {"Please select a starting point", "Please select an ending point"},
                                  {"Please select a starting point", "Please select a center" },
                                  {"Please select a starting point", "Please select a direction"}};
+
+//VARYING
 String displayedText = "Welcome! Please select a track to begin";
+int currentPage; //0 is start menu, 1 is build stage, 2 is simulation, 3 is how to play
+int currentTrack; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
+boolean trackConfirmed = false;
+Object[] allTracks;
+
+//-------------------------------------MAIN FUNCTIONS-----------------------
 
 void setup(){
   size(1800,900);
   frameRate(120);
-  colorMode(HSB,360,100,100);
-  background(200, 18, 100);
-  colorMode(RGB,255,255,255);
   currentPage = 0;
+  currentTrack = 0;
   myFont = createFont("Century", 32);
   textFont(myFont);
 }
@@ -33,14 +38,33 @@ void draw(){
   else if(currentPage == 1){
     runBuildStage();
   }
-  else{
+  else if(currentPage == 2){
     runSimulation();
+  }
+  else{
+    runHowToPlay();
   }
 }
 
+
+
+//--------------------------------START MENU-------------------------------
+
+
+
+
 void runStartMenu(){
+  clear();
+  colorMode(HSB,360,100,100);
+  background(200, 18, 100);
+  colorMode(RGB,255,255,255);
   int x_len = 300;
   int y_len = 100;
+  
+  fill(31,115,255);
+  textSize(72);
+  textAlign(CENTER, CENTER);
+  text("Build Your Own Rollercoaster", width/2, height/3);
   
   if(mouseX > 900 - (x_len / 2) && mouseX < 900 + (x_len / 2) && mouseY > 600 - (y_len / 2) && mouseY < 600 + (y_len / 2)){
     fill(252,143,161);
@@ -58,11 +82,35 @@ void runStartMenu(){
     textAlign(CENTER, CENTER);
     fill(255,255,255);
     textSize(38);
-    text("Start Drawing", 900, 600);
+    text("Start Drawing", 903, 600);
+  }
+  
+  if(mouseX > 900 - (x_len / 2) && mouseX < 900 + (x_len / 2) && mouseY > 720 - (y_len / 2) && mouseY < 720 + (y_len / 2)){
+    fill(252,143,161);
+    stroke(252,143,161);
+    rect(900 - (x_len / 2), 720 - (y_len / 2), x_len, y_len, buttonRadius);
+    textAlign(CENTER, CENTER);
+    fill(255,255,255);
+    textSize(38);
+    text("How to Play", 903, 720);
+  }
+  else{
+    fill(255,182,193);
+    stroke(255,182,193);
+    rect(900 - (x_len / 2), 720 - (y_len / 2), x_len, y_len, buttonRadius);
+    textAlign(CENTER, CENTER);
+    fill(255,255,255);
+    textSize(38);
+    text("How to Play", 903, 720);
   }
 }
 
+
+//------------------------------------------BUILD FUNCTIONS---------------------------------------
+
+
 void runBuildStage(){
+  clear();
   colorMode(HSB,360,100,100);
   background(200, 18, 100);
   colorMode(RGB,255,255,255);
@@ -72,9 +120,11 @@ void runBuildStage(){
   generateTextWindow();
   updateTextWindow();
   if(currentTrack > 0){
+    
     trackBuildAction();
-  }
-  
+    trackConfirmed = false;
+    currentTrack = 0;
+  } 
 }
 
 void checkMouseOnButton(){
@@ -105,7 +155,6 @@ void checkMouseOnButton(){
   }
   else{
     for(int i = gap; i < 1800; i+=buttonWidth + gap){
-
       fill(202,184,255);
       stroke(202,184,255);
       rect(i, buttonHeightStart, buttonWidth, buttonHeight, buttonRadius);
@@ -148,11 +197,66 @@ void trackBuildAction(){
   if(track == 0){
     
   }
+  currentTrack = 0;
 }
 
+
+
+//---------------------------SIMULATION FUNCTIONS-------------------------------
+
+
 void runSimulation(){
-  background(0);
+  clear();
+  colorMode(HSB,360,100,100);
+  background(200, 18, 100);
+  colorMode(RGB,255,255,255);
+  textAlign(CENTER, CENTER);
+  fill(0);
+  text("Simulation to come", width/2, height/2);
+  
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+    fill(252,143,161);
+    stroke(252,143,161);
+  }
+  else{
+    fill(255,182,193);
+    stroke(255,182,193); 
+  }
+  rect(gap, gap, 300, 100, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text("Back", 150 + gap, 50 + gap);
 }
+
+
+
+//-------------------------HOW TO PLAY FUNCTIONS------------------------------
+
+void runHowToPlay(){
+  clear();
+  colorMode(HSB,360,100,100);
+  background(200, 18, 100);
+  colorMode(RGB,255,255,255);
+  textAlign(CENTER, CENTER);
+  fill(0);
+  text("Instructions to come", width/2, height/2);
+  
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+    fill(252,143,161);
+    stroke(252,143,161);
+  }
+  else{
+    fill(255,182,193);
+    stroke(255,182,193); 
+  }
+  rect(gap, gap, 300, 100, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text("Back", 150 + gap, 50 + gap);
+}
+
+
+//------------------------------MOUSE FUNCTIONS------------------------------------
 
 void mouseClicked(){
   if(currentPage == 0){
@@ -161,6 +265,12 @@ void mouseClicked(){
   else if(currentPage == 1){
     buildPageMouseAction();
   }
+  else if(currentPage == 2){
+    simulationPageMouseAction();
+  }
+  else if(currentPage == 3){
+    howToPlayMouseAction();
+  }
 }
 
 void startPageMouseAction(){
@@ -168,6 +278,11 @@ void startPageMouseAction(){
   int y_len = 100;
   if(mouseX > 900 - (x_len / 2) && mouseX < 900 + (x_len / 2) && mouseY > 600 - (y_len / 2) && mouseY < 600 + (y_len / 2)){
     currentPage = 1;
+    currentTrack = 0;
+  }
+  else if(mouseX > 900 - (x_len / 2) && mouseX < 900 + (x_len / 2) && mouseY > 720 - (y_len / 2) && mouseY < 720 + (y_len / 2)){
+    currentPage = 3;
+    currentTrack = 0;
   }
 }
 
@@ -175,12 +290,20 @@ void buildPageMouseAction(){
   int mouseOver = 0;
   boolean heightIsRight = mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight;
   int leftBound = (mouseX - gap) / (buttonWidth + gap), rightBound = mouseX / (buttonWidth + gap);
-  if(heightIsRight && leftBound == rightBound){
-    displayedText = "You have selected a " + tracks[leftBound].toLowerCase();
+
+  if(heightIsRight && leftBound == rightBound && !trackConfirmed && leftBound != currentTrack - 1){
+    displayedText = "You have selected a " + tracks[leftBound].toLowerCase() + ". Please click again to confirm your selection";
     currentTrack = leftBound + 1;
+    trackConfirmed = false;
+  }
+  else if(heightIsRight && leftBound == rightBound){
+    displayedText = tracks[leftBound] + ": ";
+    trackConfirmed = true;
+    System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack);
   }
   else if(mouseY > gap + 620 && mouseY < 740 && mouseX > 1620 - gap && mouseX < 1800 - gap){
     currentPage = 2;
+    currentTrack = 0;
   }
 }
 
@@ -188,4 +311,18 @@ void updateTextWindow(){
   textAlign(CENTER, CENTER);
   fill(255);
   text(displayedText, width/2 - 100, gap + 665);
+}
+
+void simulationPageMouseAction(){
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+    currentPage = 1;
+    currentTrack = 0;
+  }
+}
+
+void howToPlayMouseAction(){
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+    currentPage = 0;
+    currentTrack = 0;
+  }
 }

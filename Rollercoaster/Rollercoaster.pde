@@ -16,6 +16,7 @@ String[][] tracksDescription = { {"Please select a starting point", "Please sele
 //VARYING
 String displayedText = "Welcome! Please select a track to begin";
 int currentPage; //0 is start menu, 1 is build stage, 2 is simulation, 3 is how to play
+int trackToConfirm; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 int currentTrack; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 boolean trackConfirmed = false;
 Object[] allTracks;
@@ -119,12 +120,13 @@ void runBuildStage(){
   generateScreen();
   generateTextWindow();
   updateTextWindow();
-  if(currentTrack > 0){
-    
+  if(currentTrack > 0 && !trackConfirmed){
+
     trackBuildAction();
     trackConfirmed = false;
     currentTrack = 0;
-  } 
+    trackToConfirm = 0;
+  }
 }
 
 void checkMouseOnButton(){
@@ -287,19 +289,20 @@ void startPageMouseAction(){
 }
 
 void buildPageMouseAction(){
-  int mouseOver = 0;
   boolean heightIsRight = mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight;
   int leftBound = (mouseX - gap) / (buttonWidth + gap), rightBound = mouseX / (buttonWidth + gap);
 
-  if(heightIsRight && leftBound == rightBound && !trackConfirmed && leftBound != currentTrack - 1){
+  if(heightIsRight && leftBound == rightBound && leftBound + 1 != trackToConfirm){
     displayedText = "You have selected a " + tracks[leftBound].toLowerCase() + ". Please click again to confirm your selection";
     currentTrack = leftBound + 1;
+    trackToConfirm = leftBound + 1;
     trackConfirmed = false;
   }
   else if(heightIsRight && leftBound == rightBound){
     displayedText = tracks[leftBound] + ": ";
+    trackToConfirm = 0;
     trackConfirmed = true;
-    System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack);
+    //System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack);
   }
   else if(mouseY > gap + 620 && mouseY < 740 && mouseX > 1620 - gap && mouseX < 1800 - gap){
     currentPage = 2;

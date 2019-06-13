@@ -20,7 +20,10 @@ int currentPage; //0 is start menu, 1 is build stage, 2 is simulation, 3 is how 
 int trackToConfirm; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 int currentTrack; //0 is none, 1 straight track, 2 is curved track, 3 is loop, 4 is spring
 boolean trackConfirmed = false;
-Object[] allTracks;
+ArrayList<int[]> pointsToDisplay = new ArrayList<int[]>();
+int currentPrompt = 0;
+ArrayList<Object> allTracks = new ArrayList<Object>(); 
+int[] info = new int[4];
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
@@ -121,14 +124,7 @@ void runBuildStage(){
   generateScreen();
   generateTextWindow();
   updateTextWindow();
-  if(currentTrack > 0 && trackConfirmed){
-
-    trackBuildAction();
-    if(!trackConfirmed){
-      currentTrack = 0;
-      trackToConfirm = 0;
-    }
-  }
+  displayPoints();
 }
 
 void checkMouseOnButton(){
@@ -198,38 +194,113 @@ void generateTextWindow(){
   rect(x_left, y_top, x_right - x_left, buttonHeight, buttonRadius);
 }
 
-void trackBuildAction(){
+void trackBuildAction(int x, int y){
   int track = currentTrack - 1;
+  //System.out.println(currentTrack);
   if(track == 0){
-    buildStraightTrack();
+    buildStraightTrack(x, y);
   }
-  currentTrack = 0;
+  else if(track == 1){
+    buildCurvedTrack(x, y);
+  }
+  else if(track == 2){
+    buildLoop(x, y);
+  }
+  else if(track == 3){
+    buildSpring(x, y);
+  }
 }
 
-void buildStraightTrack(){
+void buildStraightTrack(int x, int y){
   String[] instructions = tracksDescription[currentTrack - 1];
-  displayedText = tracks[currentTrack - 1] + ": " + instructions[0];
-  trackConfirmed = false;
+  if(currentPrompt == 0){
+    info[0] = x;
+    info[1] = y;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    currentPrompt++;
+    displayedText = tracks[currentTrack - 1] + ": " + instructions[1];
+  }
+  else if(currentPrompt == 1){
+    info[2] = x;
+    info[3] = y;
+    currentTrack = 0;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    trackToConfirm = 0;
+    trackConfirmed = false;
+    currentPrompt = 0;
+    displayedText = "Straight track added! Please select another track or click Done";
+    currentPrompt++;
+    //allTracks.add(new Track (1, ));
+  }
+  
 }
 
-void buildCurvedTrack(){
+void buildCurvedTrack(int x, int y){
+  String[] instructions = tracksDescription[currentTrack - 1];
+  if(currentPrompt == 0){
+    info[0] = x;
+    info[1] = y;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    currentPrompt++;
+    displayedText = tracks[currentTrack - 1] + ": " + instructions[1];
+  }
+  else if(currentPrompt == 1){
+    info[2] = x;
+    info[3] = y;
+    currentTrack = 0;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    trackToConfirm = 0;
+    trackConfirmed = false;
+    currentPrompt = 0;
+    displayedText = "Curved track added! Please select another track or click Done";
+    currentPrompt++;
+    //allTracks.add(new Track(2, ));
+  }
+}
+
+void buildLoop(int x, int y){
+  String[] instructions = tracksDescription[currentTrack - 1];
+  if(currentPrompt == 0){
+    info[0] = x;
+    info[1] = y;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    currentPrompt++;
+    displayedText = tracks[currentTrack - 1] + ": " + instructions[1];
+  }
+  else if(currentPrompt == 1){
+    info[2] = x;
+    info[3] = y;
+    currentTrack = 0;
+    int[] new_info = {x, y, 10};
+    pointsToDisplay.add(new_info);
+    trackToConfirm = 0;
+    trackConfirmed = false;
+    currentPrompt = 0;
+    displayedText = "Loop added! Please select another track or click Done";
+    currentPrompt++;
+    //allTracks.add(new Track(2, ));
+  }
+}
+
+void buildSpring(int x, int y){
   String[] instructions = tracksDescription[currentTrack - 1];
   for(int i = 0; i < instructions.length; i++){
   }
 }
 
-void buildLoop(){
-  String[] instructions = tracksDescription[currentTrack - 1];
-  for(int i = 0; i < instructions.length; i++){
+void displayPoints(){
+  fill(0);
+  stroke(0);
+  for(int i = 0; i < pointsToDisplay.size(); i++){
+    int[] info1 = pointsToDisplay.get(i);
+    ellipse(info1[0], info1[1], info1[2], info1[2]);
   }
 }
-
-void buildSpring(){
-  String[] instructions = tracksDescription[currentTrack - 1];
-  for(int i = 0; i < instructions.length; i++){
-  }
-}
-
 
 
 //---------------------------SIMULATION FUNCTIONS-------------------------------
@@ -320,19 +391,27 @@ void buildPageMouseAction(){
   boolean heightIsRight = mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight;
   int leftBound = (mouseX - gap) / (buttonWidth + gap), rightBound = mouseX / (buttonWidth + gap);
 
-  if(heightIsRight && leftBound == rightBound && leftBound + 1 != trackToConfirm){
+  if(trackConfirmed && mouseY > gap && mouseY < 700 - gap - buttonHeight - 5 - buttonHeight - 5 && mouseX > gap && mouseY < 1400 - gap){
+    trackBuildAction(mouseX, mouseY);
+  }
+  else if(heightIsRight && leftBound == rightBound && leftBound + 1 != trackToConfirm){
     //System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack + " trackToConfirm: " + trackToConfirm);
     displayedText = "You have selected a " + tracks[leftBound].toLowerCase() + ". Please click again to confirm your selection";
     currentTrack = leftBound + 1;
     trackToConfirm = leftBound + 1;
     trackConfirmed = false;
+    currentPrompt = 0;
+    pointsToDisplay = new ArrayList<int[]>();
     //System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack + " trackToConfirm: " + trackToConfirm);
     //System.out.println(leftBound + 1 != trackToConfirm);
   }
   else if(heightIsRight && leftBound == rightBound){
     displayedText = tracks[leftBound] + ": ";
     trackToConfirm = 0;
+    currentPrompt = 0;
     trackConfirmed = true;
+    String[] instructions = tracksDescription[currentTrack - 1];
+    displayedText = tracks[currentTrack - 1] + ": " + instructions[0];
     //System.out.println("leftBound: " + leftBound + " currentTrack: " + currentTrack + " trackToConfirm: " + trackToConfirm);
   }
   else if(mouseY > 700 - gap - buttonHeight - 5 - buttonHeight && mouseY < 700 - gap - buttonHeight - 5 && mouseX > 1400 - gap - doneWidth && mouseX < 1400 - gap){

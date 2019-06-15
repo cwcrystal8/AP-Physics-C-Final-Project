@@ -9,9 +9,9 @@ int buttonHeightStart = 700 - gap - buttonHeight;
 int buttonRadius = 10;
 int doneWidth = 120;
 String[] tracks = {"Horizontal Track", "Curved Track", "Loop", "Spring"};
-String[][] tracksDescription = { {"Please select a starting point", "Please select an ending point"},
+String[][] tracksDescription = { {"Please select a starting point", "Please select a length for the ending point"},
                                  {"Please select a starting point", "Please select an ending point"},
-                                 {"Please select a starting point", "Please select a center" },
+                                 {"Please select a starting point", "Please select a height for the center" },
                                  {"Please select a starting point", "Please select a direction"}};
 
 //VARYING
@@ -136,7 +136,7 @@ void runBuildStage(){
 
 void checkMouseOnButton(){
   int mouseOver = 0;
-  
+  strokeWeight(1);
   for(int i = gap; i < 1400; i+=buttonWidth + gap){
     if(mouseX > i && mouseX < i + buttonWidth && mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight){
       mouseOver = i;
@@ -181,6 +181,7 @@ void checkMouseOnDone(){
     fill(255,178,238);
     stroke(255,178,238);
   }
+  strokeWeight(1);
   rect(x_left, y_top, x_right - x_left, y_bottom - y_top, buttonRadius);
   fill(255);
   textAlign(CENTER, CENTER);
@@ -189,12 +190,13 @@ void checkMouseOnDone(){
 
 void checkMouseOnTrack(){
   int x = mouseX, y = mouseY;
-  if(allTracks.size() > 0){
+  if(allTracks.size() > 0 && trackConfirmed){
     Track prev = allTracks.get(allTracks.size() - 1);
     int xfinish = prev.xfinish, yfinish = prev.yfinish;
     if(x > xfinish - 10 && x < xfinish + 10 && y > yfinish - 10 && y < yfinish + 10){
       fill(0,256,0);
       stroke(0,256,0);
+      strokeWeight(1);
       ellipse(xfinish, yfinish, 10, 10);
     }
   }
@@ -204,6 +206,7 @@ void generateScreen(){
   int x_left = gap, x_right = 1400 - gap, y_top = gap, y_bottom = 700 - gap - buttonHeight - 5 - buttonHeight - 5;
   fill(255);
   stroke(255);
+  strokeWeight(1);
   rect(x_left, y_top, 1400 - gap * 2, y_bottom - y_top, buttonRadius); 
 }
 
@@ -211,6 +214,7 @@ void generateTextWindow(){
   int x_left = gap, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
   fill(255,178,238);
   stroke(255,178,238);
+  strokeWeight(1);
   rect(x_left, y_top, x_right - x_left, buttonHeight, buttonRadius);
 }
 
@@ -270,7 +274,7 @@ void buildHorizontalTrack(int x, int y){
     currentPrompt = 0;
     displayedText = "Horizontal track added! Please select another track or click Done";
     currentPrompt++;
-    allTracks.add(new Track (info[0], info[2], info[1], info[1], 1));
+    allTracks.add(new Track (info[0], info[2], info[1], info[1], 0, 1));
   }
   
 }
@@ -314,7 +318,7 @@ void buildCurvedTrack(int x, int y){
     currentPrompt = 0;
     displayedText = "Curved track added! Please select another track or click Done";
     currentPrompt++;
-    allTracks.add(new Track (info[0], info[2], info[1], info[3], 2));
+    allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 2));
   }
 }
 
@@ -347,17 +351,22 @@ void buildLoop(int x, int y){
     
   }
   else if(currentPrompt == 1){
-    info[2] = x;
-    info[3] = y;
-    currentTrack = 0;
-    int[] new_info = {x, y, 10};
-    pointsToDisplay.add(new_info);
-    trackToConfirm = 0;
-    trackConfirmed = false;
-    currentPrompt = 0;
-    displayedText = "Loop track added! Please select another track or click Done";
-    currentPrompt++;
-    allTracks.add(new Track (info[0], info[2], info[1], info[3], 3));
+    if(y < info[1]){
+      info[2] = info[0];
+      info[3] = y;
+      currentTrack = 0;
+      //int[] new_info = {info[0], info[1], 10};
+      //pointsToDisplay.add(new_info);
+      trackToConfirm = 0;
+      trackConfirmed = false;
+      currentPrompt = 0;
+      displayedText = "Loop added! Please select another track or click Done";
+      currentPrompt++;
+      allTracks.add(new Track (info[0], info[0], info[1], info[1], info[3] - info[1], 3));
+    }
+    else{
+      displayedText = "Error: center must be above the starting point";
+    }
   }
 }
 
@@ -404,6 +413,7 @@ void display(Track obj){
     displayCurvedTrack(obj);
   }
   else if (type == 3) {
+    displayLoop(obj);
   }
   else if (type == 4) {
   }
@@ -487,6 +497,15 @@ void displayCurvedTrack(Track obj){
   }
   
   ellipse(obj.xstart, obj.ystart, 10, 10);
+  ellipse(obj.xfinish, obj.yfinish, 10, 10);
+}
+
+void displayLoop(Track obj){
+  strokeWeight(4);
+  float x1 = obj.xstart, y1 = obj.ystart, r = obj.radius;
+  noFill();
+  ellipse(x1,y1 + r, 2 * r, 2 * r);
+  fill(0);
   ellipse(obj.xfinish, obj.yfinish, 10, 10);
 }
 

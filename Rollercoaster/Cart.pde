@@ -2,40 +2,49 @@ import java.util.*;
 
 public class Cart {
   
-  public int ycor, xcor;
+  public float ycor, xcor;
   public float xvel, yvel;
   public float xaccel, yaccel;
-  public int ht;
+  public float ht;
   public float angle;
   public int mass;
   public int col;
   public float kinetic;
   public float potential;
   
-  public Cart(int x, int y, float ang) {
-    xcor = x;
-    ycor = y;
+  public Cart(float x, float y, float ang) {
+    xcor = (float)x;
+    ycor = (float)y;
     xvel = 0;
     yvel = 0;
     xaccel  = 0;
-    yaccel = 9.81;
-    ht = y;
+    yaccel = 9.81 / 10;
+    ht = (float)y - 20;
     angle = ang;
     mass = 30;
     col = #FF0808;
   }
 
-  void calcVel(float angle, int ycor){
-    angle = angle * (PI / 180);
+  float[] calcVel(float y){
+    //angle = anPI / 180);
     //float potential = mass * ht * 9.81;
-    float new_potential = mass * (ht-ycor) * 9.81;
-    float velocity = sqrt((new_potential) / (0.5 * mass));
-    xvel = velocity * cos(angle);
-    yvel = velocity * sin(angle);
-    potential = new_potential;
-    kinetic = calcKinetic();
+    //float new_potential = mass * (*1 * (ht-ycor)) * yaccel;
+    //System.out.println(ang);
+    float velocity = sqrt(2 * yaccel * (y-ht));
+    
+    //System.out.println(velocity);
+    float new_xvel = velocity * sin(angle);
+    float new_yvel = velocity * cos(angle);
+    //potential = new_potential;
+    kinetic = 0.5 * mass * (float)Math.pow(velocity, 2);
+    float[] ret_arr = {new_xvel, new_yvel};
+    
+    return ret_arr;
   }
 
+  float calcTangVel(float y){
+    return sqrt(2 * yaccel * (y-ht));
+  }
   /*
   void update() {
     fill(col);
@@ -48,7 +57,7 @@ public class Cart {
   }*/
   
   
-  float calcKinetic() {
-    return((mass * ht * 9.81) - potential);
+  float calcVelFromKinetic(float y) {
+    return sqrt(2 * yaccel * (y-ht));
   }
 }

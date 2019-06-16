@@ -26,7 +26,8 @@ ArrayList<Track> allTracks = new ArrayList<Track>();
 int[] info = new int[4];
 int springWidth = 10;
 Cart cart;
-int currentTrackSim;
+int currentTrackSim = 0;
+int start = 0;
 
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
@@ -38,11 +39,23 @@ void setup(){
   currentTrack = 0;
   myFont = createFont("Century", 32);
   textFont(myFont);
-  allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 100 + gap, 0, 5));
+  allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 110 + gap, 0, 5));
   Track first = allTracks.get(0);
   int x = (first.xstart + first.xfinish) / 2, y = (first.ystart + first.yfinish) / 2;
   float ang = calculateCurvedTrackAngle(first);
-  cart = new Cart(x+25, y - 10, ang);
+  
+  float x1 = first.xstart, y1 = first.ystart, x2 = first.xfinish, y2 = first.yfinish;
+  float d = (y2-y1)/3.0, u = y1 + d, v = (3*y1) + (2*d) + y2, w = (y1 + y2)*(y1 + d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+  float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = (4*u) - v, l = (4*x1) - j;
+  float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+  float a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+  float b = y1 + d - sqrt((d*d) - ((a-x1)*(a-x1)));
+  
+  float a1 = a * cos(ang) + b * sin(ang), b1 = -1 * a * sin(ang) + b * cos(ang);
+  
+  
+  
+  cart = new Cart(a1 + 10, b, ang);
 }
 
 void draw(){
@@ -695,7 +708,7 @@ void runSimulation(){
   colorMode(RGB,255,255,255);
   textAlign(CENTER, CENTER);
   fill(0);
-  text("Simulation to come", width/2, height/2);
+  //text("Simulation to come", width/2, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
     fill(252,143,161);
@@ -713,7 +726,8 @@ void runSimulation(){
   if(currentTrackSim < allTracks.size()){
     updateCart();
   }
-  
+  displayPoints();
+  displayTracks();
 }
 
 void displayCart(){
@@ -725,11 +739,13 @@ void displayCart(){
   fill(0);
   float newx = x * cos(ang) + y*sin(ang), newy = -x*sin(ang) + y * cos(ang);
   
-  rect(newx - 25,newy - 25, 50, 50);
+  rect(newx - 10,newy - 10, 20, 20);
   popMatrix();
+  
 }
 
 void updateCart(){
+  System.out.println((cart.yvel * cart.yvel) + (cart.xvel * cart.xvel));
   Track currTrack = allTracks.get(currentTrackSim);
   int type = currTrack.type;
   float xvel = cart.xvel, yvel = cart.yvel;
@@ -743,22 +759,36 @@ void updateCart(){
   }
   else if(type == 4){
   }
+  //System.out.println(cart.ycor);
+  //float vel = cart.calcVelFromKinetic(cart.ycor);
+  
+  ////System.out.println(vels[0]);
+  //cart.xcor += vel * cos(cart.angle);
+  //cart.ycor += vel * sin(cart.angle);
+  //System.out.println(cart.xcor + " : "+ cart.ycor);
+  
     
 }
 
 void updateCartHorizontal(){
+  System.out.println("calling hjorizontal! " + cart.xvel);
   Track currTrack = allTracks.get(currentTrackSim);
-  int type = currTrack.type;
+  //System.out.println(currTrack.type);
+  float[] vels = cart.calcVel(cart.ycor);
   float xvel = cart.xvel, yvel = cart.yvel;
-if( cart.xcor + 25  <= max(currTrack.xfinish, currTrack.xstart) && cart.xcor - 25 >= min(currTrack.xfinish, currTrack.xstart)){
-    cart.xvel = sqrt(xvel*xvel + yvel+yvel) * xvel / abs(xvel);
-    cart.yvel = 0;
+  cart.angle = 0;
+  cart.yvel = 0;
+  if(!(( cart.xcor + 25  < max(currTrack.xfinish, currTrack.xstart) && vels[0] > 0) || ( cart.xcor - 25 > min(currTrack.xfinish, currTrack.xstart) && vels[0] < 0))){
     cart.angle = 0;
-    cart.xcor += cart.xvel; 
   }
-  else{
-    currentTrackSim++;
+  if (cart.xcor >= currTrack.xfinish) {
+     currentTrackSim++;
   }
+  //System.out.println(cart.xvel + " : " + cart.yvel);
+  cart.xvel = cos(0) * cart.calcVelFromKinetic(cart.ycor);
+  cart.xcor += cart.xvel / 10;
+  cart.yvel = 0;
+  cart.ycor += cart.yvel / 10;
 }
 
 void updateCartCurved(){
@@ -815,33 +845,58 @@ void updateCartCurved(){
     
   }
   
-  
-  
-  float ang = -1*angle;
-  angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+  float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
+  float velo = cart.calcTangVel(cart.ycor);
   float x = cart.xcor, y = cart.ycor;
-  float newx = a * cos(ang) + b*sin(ang), newy = -a*sin(ang) + b * cos(ang); 
-  float newcartx = x * cos(ang) + y*sin(ang), cartnewy = -x*sin(ang) + y * cos(ang);
-  float newxright = (x1+x2-2*a) * cos(-1*ang) + (y1+y2-2*b)*sin(-1*ang);
-  /*if( cart.xcor + 25  > max(currTrack.xfinish, currTrack.xstart) || cart.xcor - 25 < min(currTrack.xfinish, currTrack.xstart)){
-    currentTrackSim++;
+  //System.out.println( "(" + x1 + "," + y1 + ")    (" + x2 + "," + y2 + ")");
+  //System.out.println("a: " + a + " b: " + b);
+  //System.out.println("x: " + x + " y: " + y);
+  if(x > x2){
+    if (start <= 1) {
+      currentTrackSim = 0;
+    }
+    else {
+      currentTrackSim ++;
+    }
+    start ++;
+    cart.angle = 0;
   }
-  else*/ if(newcartx < newx){
+  else if( x < a ){
     System.out.println("on the left arc!");
+    float r = (y2 - y1) / 3;
+    angle = -1*(float)Math.atan((cart.xcor-x1) / (y1 + r - cart.ycor));
+    cart.angle = angle;
+    
     
   }
-  else if(x > (x1+x2-2*a)){
-    System.out.println("on the right arc!");
+  else if(y > b1){
+    //System.out.println("x: " + x + " a1: " + a1);
     
+    float r = (y2 - y1) / 3;
+    
+    
+    angle = -1*atan((x2 - x) / (y - (y2 - ((y2 - y1) / 3))));
+    cart.angle = angle;
+    
+
   }
   else{
-    System.out.println("i'm here!");
-    cart.xvel += cart.mass * 9.81 * sin(angle) * sin(angle) / 120;
-    cart.yvel += cart.mass * 9.81 * sin(angle) * cos(angle) / 120;
-    cart.xcor += cart.xvel;
-    cart.ycor += cart.yvel;
+    System.out.println("in ith emiddle!");
   }
+  float vel = cart.calcVelFromKinetic(cart.ycor);
+  cart.xvel = cos(angle) * (vel);
+  cart.yvel = Math.abs(sin(angle) * (vel));
+  cart.xcor += cart.xvel / 10;
+  cart.ycor += cart.yvel / 10;
+
+  
 }
+
+  float getYFromX(float cart_x, float arc_x, float arc_y_low, float arc_y_high) {
+    float r = (arc_y_low - arc_y_high) / 3;
+    return (arc_y_low - r + sqrt( (r*r) - ((cart_x - arc_x)*(cart_x - arc_x)) ));
+ }
+
 
 //-------------------------HOW TO PLAY FUNCTIONS------------------------------
 

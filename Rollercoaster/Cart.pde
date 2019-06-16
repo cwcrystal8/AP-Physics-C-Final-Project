@@ -12,15 +12,15 @@ public class Cart {
   public float kinetic;
   public float potential;
   
-  public Cart(int x, int y) {
+  public Cart(int x, int y, float ang) {
     xcor = x;
     ycor = y;
-    xvel =0;
+    xvel = 0;
     yvel = 0;
     xaccel  = 0;
     yaccel = 9.81;
-    ht = height;
-    angle = 0;
+    ht = y;
+    angle = ang;
     mass = 30;
     col = #FF0808;
   }
@@ -36,6 +36,7 @@ public class Cart {
     kinetic = calcKinetic();
   }
 
+  /*
   void update() {
     fill(col);
     rect(xcor - 100, ycor - 100, xcor + 100, ycor + 100, 14, 100, 14, 14);
@@ -44,7 +45,8 @@ public class Cart {
     text("Caert", xcor, ycor,xcor + 10, ycor + 10);
     
     calcVel(int(angle), ycor);
-  }
+  }*/
+  
   
   float calcKinetic() {
     return((mass * ht * 9.81) - potential);

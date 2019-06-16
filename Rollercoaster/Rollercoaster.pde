@@ -12,7 +12,7 @@ String[] tracks = {"Horizontal Track", "Curved Track", "Loop", "Spring"};
 String[][] tracksDescription = { {"Please select a starting point", "Please select a length for the ending point"},
                                  {"Please select a starting point", "Please select an ending point"},
                                  {"Please select a starting point", "Please select a height for the center" },
-                                 {"Please select a starting point", "Please select a direction"}};
+                                 {"Please select a starting point", "Please select a length for the ending point"}};
 
 //VARYING
 String displayedText = "Welcome! Please select a track to begin";
@@ -24,6 +24,10 @@ ArrayList<int[]> pointsToDisplay = new ArrayList<int[]>();
 int currentPrompt = 0;
 ArrayList<Track> allTracks = new ArrayList<Track>(); 
 int[] info = new int[4];
+int springWidth = 10;
+Cart cart;
+int currentTrackSim;
+
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
@@ -34,6 +38,11 @@ void setup(){
   currentTrack = 0;
   myFont = createFont("Century", 32);
   textFont(myFont);
+  allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 100 + gap, 0, 5));
+  Track first = allTracks.get(0);
+  int x = (first.xstart + first.xfinish) / 2, y = (first.ystart + first.yfinish) / 2;
+  float ang = calculateCurvedTrackAngle(first);
+  cart = new Cart(x+25, y - 10, ang);
 }
 
 void draw(){
@@ -132,6 +141,8 @@ void runBuildStage(){
   checkMouseOnButton();
   checkMouseOnDone();
   checkMouseOnTrack();
+  
+  displayCart();
 }
 
 void checkMouseOnButton(){
@@ -308,17 +319,23 @@ void buildCurvedTrack(int x, int y){
     
   }
   else if(currentPrompt == 1){
-    info[2] = x;
-    info[3] = y;
-    currentTrack = 0;
-    int[] new_info = {x, y, 10};
-    pointsToDisplay.add(new_info);
-    trackToConfirm = 0;
-    trackConfirmed = false;
-    currentPrompt = 0;
-    displayedText = "Curved track added! Please select another track or click Done";
-    currentPrompt++;
-    allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 2));
+    if( abs(x - info[0]) >= 2 * abs((y - info[1]) / 3)){
+      info[2] = x;
+      info[3] = y;
+      currentTrack = 0;
+      int[] new_info = {x, y, 10};
+      pointsToDisplay.add(new_info);
+      trackToConfirm = 0;
+      trackConfirmed = false;
+      currentPrompt = 0;
+      displayedText = "Curved track added! Please select another track or click Done";
+      currentPrompt++;
+      allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 2));
+    }
+    else{
+      displayedText = "Error: This path is too steep!";
+    }
+    
   }
 }
 
@@ -370,9 +387,63 @@ void buildLoop(int x, int y){
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 void buildSpring(int x, int y){
   String[] instructions = tracksDescription[currentTrack - 1];
-  for(int i = 0; i < instructions.length; i++){
+  
+  if(allTracks.size() > 0 && (allTracks.get(allTracks.size() - 1)).type == 1){
+    Track prev = allTracks.get(allTracks.size() - 1);
+    int xfinish = prev.xfinish, yfinish = prev.yfinish;
+    if(currentPrompt == 0){
+      if(x > xfinish - 10 && x < xfinish + 10 && y > yfinish - 10 && y < yfinish + 10){
+        info[0] = xfinish;
+        info[1] = yfinish;
+        int[] new_info = {xfinish, yfinish, 10};
+        pointsToDisplay.add(new_info);
+        currentPrompt++;
+        displayedText = tracks[currentTrack - 1] + ": " + instructions[1];  
+      }
+      else{
+        displayedText = "Error: Starting point must be the ending point of the last track you placed";
+      }
+    }
+    else if(currentPrompt == 1){
+      if(abs(xfinish - prev.xstart) > abs(x - info[0])){
+        if((xfinish - prev.xstart) * (x - info[0]) < 0){
+          info[2] = x;
+          info[3] = info[1];
+          currentTrack = 0;
+          int[] new_info = {info[2], info[3], 10};
+          pointsToDisplay.add(new_info);
+          trackToConfirm = 0;
+          trackConfirmed = false;
+          currentPrompt = 0;
+          displayedText = "Spring added! Please select another track or click Done";
+          currentPrompt++;
+          allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 4));
+        }
+        else{
+          displayedText = "Error: Spring must be in the same direction as the horizontal track it hovers above";
+        }
+      }
+      else{
+        displayedText = "Error: Spring cannot be longer than the horizontal track it hovers above";
+      }
+    }
+  }
+  else{
+    displayedText = "Error: A spring must be placed above a horizontal track";
   }
 }
 
@@ -416,6 +487,10 @@ void display(Track obj){
     displayLoop(obj);
   }
   else if (type == 4) {
+    displaySpring(obj, springWidth);
+  }
+  else if(type == 5){
+    displayStartingPlatform(obj);
   }
   
 }
@@ -509,6 +584,107 @@ void displayLoop(Track obj){
   ellipse(obj.xfinish, obj.yfinish, 10, 10);
 }
 
+void displaySpring(Track obj, int xwidth){
+  int x1 = obj.xstart, y = obj.ystart, x2 = obj.xfinish;
+  for(int i = min(x1, x2); i < max(x1,x2); i += xwidth ){
+    //System.out.println(i);
+    noFill();
+    strokeWeight(4);
+    beginShape();
+    vertex(i,y);
+    quadraticVertex(i+xwidth/2, y - 100, i+xwidth, y);
+    endShape();
+  }
+  ellipse(obj.xfinish, obj.yfinish, 10, 10);
+}
+
+void displayStartingPlatform(Track obj){
+  float x1 = obj.xstart, y1 = obj.ystart, x2 = obj.xfinish, y2 = obj.yfinish;
+  float a = 0,b = 0;
+  noFill();
+  stroke(0,256,0);
+  strokeWeight(4);
+  //System.out.println(x1 + "," + y1 + " : " + x2 + " : " + y2);
+  if(y1 < y2 && x1 < x2){
+    float d = (y2-y1)/3.0, u = y1 + d, v = (3*y1) + (2*d) + y2, w = (y1 + y2)*(y1 + d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = (4*u) - v, l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    b = y1 + d - sqrt((d*d) - ((a-x1)*(a-x1)));
+    float angle = asin((a-x1)/d);
+    //System.out.println(d + " : " + (a - x1));
+    //arc(x1, y1+d, 2*d, 2*d, PI + HALF_PI, PI + HALF_PI + angle);
+    arc(x2, y2-d, 2*d, 2*d, HALF_PI, HALF_PI+angle);
+    line(a,b,x2+x1-a, y1+y2-b);
+    fill(0);
+    stroke(0);
+  }
+  
+  ellipse(a, b, 10, 10);
+  ellipse(obj.xfinish, obj.yfinish, 10, 10);
+}
+
+float calculateCurvedTrackAngle(Track obj){
+  float x1 = obj.xstart, y1 = obj.ystart, x2 = obj.xfinish, y2 = obj.yfinish;
+  noFill();
+  stroke(0);
+  strokeWeight(4);
+  //System.out.println(x1 + "," + y1 + " : " + x2 + " : " + y2);
+  if(y1 < y2 && x1 < x2){
+    float d = (y2-y1)/3.0, u = y1 + d, v = (3*y1) + (2*d) + y2, w = (y1 + y2)*(y1 + d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = (4*u) - v, l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    float a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    float b = y1 + d - sqrt((d*d) - ((a-x1)*(a-x1)));
+    float angle = asin((a-x1)/d);
+    return atan((x1+x2-2*a)/(y1+y2-2*b));
+  }
+  else if(y1 > y2 && x1 < x2){//bottom left to top right
+    //System.out.println("this one");
+    float d = (y1-y2)/3.0, u = y1 - d, v = (3*y1) - (2*d) + y2, w = (y1 + y2)*(y1 - d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = v - (4*u), l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    float a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    float b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
+    float angle = asin((a-x1)/d);
+        
+    //System.out.println(b + " : " + y1);
+    
+    return atan((x1+x2-2*a)/(y1+y2-2*b));
+  }
+  else if(y1 < y2 && x1 > x2){//top right to bottom left
+    float tempx = x2, tempy = y2;
+    x2 = x1;
+    y2 = y1;
+    x1 = tempx;
+    y1 = tempy;
+    float d = (y1-y2)/3.0, u = y1 - d, v = (3*y1) - (2*d) + y2, w = (y1 + y2)*(y1 - d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = v - (4*u), l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    float a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    float b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
+    float angle = asin((a-x1)/d);
+
+    return atan((x1+x2-2*a)/(y1+y2-2*b));
+  }
+  else if(y1 > y2 && x1 > x2){ //WORKS
+    float d = (y1-y2)/3.0, u = y2 + d, v = (3*y2) + (2*d) + y1, w = (y2 + y1)*(y2 + d), j = (3*x2) + x1, k = (x2*x2) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x2*x2) + k, i = (4*u) - v, l = (4*x2) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x2), o = (h*h) - (i*i*d*d) + (i*i*x2*x2);
+    float a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    float b = y2 + d - sqrt((d*d) - ((a-x2)*(a-x2)));
+    float angle = asin((a-x2)/d);
+    
+    
+    return atan((x1+x2-2*a)/(y1+y2-2*b));
+    
+    
+  }
+  else{
+   return 0; 
+  }
+}
+
 //---------------------------SIMULATION FUNCTIONS-------------------------------
 
 
@@ -533,10 +709,139 @@ void runSimulation(){
   fill(255);
   textAlign(CENTER, CENTER);
   text("Back", 150 + gap, 50 + gap);
+  displayCart();
+  if(currentTrackSim < allTracks.size()){
+    updateCart();
+  }
   
 }
 
+void displayCart(){
+  float x = cart.xcor, y = cart.ycor, ang = -1*cart.angle;
+  fill(0);
+  //rect(width/2,height/2, 50, 50);
+  pushMatrix();
+  rotate(ang);
+  fill(0);
+  float newx = x * cos(ang) + y*sin(ang), newy = -x*sin(ang) + y * cos(ang);
+  
+  rect(newx - 25,newy - 25, 50, 50);
+  popMatrix();
+}
 
+void updateCart(){
+  Track currTrack = allTracks.get(currentTrackSim);
+  int type = currTrack.type;
+  float xvel = cart.xvel, yvel = cart.yvel;
+  if(type == 1){
+    updateCartHorizontal();
+  }
+  else if(type == 2 || type == 5){
+    updateCartCurved();
+  }
+  else if(type == 3){
+  }
+  else if(type == 4){
+  }
+    
+}
+
+void updateCartHorizontal(){
+  Track currTrack = allTracks.get(currentTrackSim);
+  int type = currTrack.type;
+  float xvel = cart.xvel, yvel = cart.yvel;
+if( cart.xcor + 25  <= max(currTrack.xfinish, currTrack.xstart) && cart.xcor - 25 >= min(currTrack.xfinish, currTrack.xstart)){
+    cart.xvel = sqrt(xvel*xvel + yvel+yvel) * xvel / abs(xvel);
+    cart.yvel = 0;
+    cart.angle = 0;
+    cart.xcor += cart.xvel; 
+  }
+  else{
+    currentTrackSim++;
+  }
+}
+
+void updateCartCurved(){
+  System.out.println("we're here!");
+  Track currTrack = allTracks.get(currentTrackSim);
+  int type = currTrack.type;
+  float xvel = cart.xvel, yvel = cart.yvel;
+  
+  float a = 0,b = 0;
+  float angle = 0;
+  
+  float x1 = currTrack.xstart, y1 = currTrack.ystart, x2 = currTrack.xfinish, y2 = currTrack.yfinish;
+
+  //System.out.println(x1 + "," + y1 + " : " + x2 + " : " + y2);
+  if(y1 < y2 && x1 < x2){
+    float d = (y2-y1)/3.0, u = y1 + d, v = (3*y1) + (2*d) + y2, w = (y1 + y2)*(y1 + d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = (4*u) - v, l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    b = y1 + d - sqrt((d*d) - ((a-x1)*(a-x1)));
+    angle = asin((a-x1)/d);
+    
+  }
+  else if(y1 > y2 && x1 < x2){//bottom left to top right
+    //System.out.println("this one");
+    float d = (y1-y2)/3.0, u = y1 - d, v = (3*y1) - (2*d) + y2, w = (y1 + y2)*(y1 - d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = v - (4*u), l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
+    angle = asin((a-x1)/d);
+        
+  }
+  else if(y1 < y2 && x1 > x2){//top right to bottom left
+    float tempx = x2, tempy = y2;
+    x2 = x1;
+    y2 = y1;
+    x1 = tempx;
+    y1 = tempy;
+    float d = (y1-y2)/3.0, u = y1 - d, v = (3*y1) - (2*d) + y2, w = (y1 + y2)*(y1 - d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = v - (4*u), l = (4*x1) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x1), o = (h*h) - (i*i*d*d) + (i*i*x1*x1);
+    a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
+    angle = asin((a-x1)/d);
+  }
+  else if(y1 > y2 && x1 > x2){ //WORKS
+    float d = (y1-y2)/3.0, u = y2 + d, v = (3*y2) + (2*d) + y1, w = (y2 + y1)*(y2 + d), j = (3*x2) + x1, k = (x2*x2) + (x1*x2);
+    float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x2*x2) + k, i = (4*u) - v, l = (4*x2) - j;
+    float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x2), o = (h*h) - (i*i*d*d) + (i*i*x2*x2);
+    a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
+    b = y2 + d - sqrt((d*d) - ((a-x2)*(a-x2)));
+    angle = asin((a-x1)/d);
+    
+  }
+  
+  
+  
+  float ang = -1*angle;
+  angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+  float x = cart.xcor, y = cart.ycor;
+  float newx = a * cos(ang) + b*sin(ang), newy = -a*sin(ang) + b * cos(ang); 
+  float newcartx = x * cos(ang) + y*sin(ang), cartnewy = -x*sin(ang) + y * cos(ang);
+  float newxright = (x1+x2-2*a) * cos(-1*ang) + (y1+y2-2*b)*sin(-1*ang);
+  /*if( cart.xcor + 25  > max(currTrack.xfinish, currTrack.xstart) || cart.xcor - 25 < min(currTrack.xfinish, currTrack.xstart)){
+    currentTrackSim++;
+  }
+  else*/ if(newcartx < newx){
+    System.out.println("on the left arc!");
+    
+  }
+  else if(x > (x1+x2-2*a)){
+    System.out.println("on the right arc!");
+    
+  }
+  else{
+    System.out.println("i'm here!");
+    cart.xvel += cart.mass * 9.81 * sin(angle) * sin(angle) / 120;
+    cart.yvel += cart.mass * 9.81 * sin(angle) * cos(angle) / 120;
+    cart.xcor += cart.xvel;
+    cart.ycor += cart.yvel;
+  }
+}
 
 //-------------------------HOW TO PLAY FUNCTIONS------------------------------
 
@@ -625,6 +930,7 @@ void buildPageMouseAction(){
     currentPage = 2;
     currentTrack = 0;
   }
+  
 }
 
 void updateTextWindow(){

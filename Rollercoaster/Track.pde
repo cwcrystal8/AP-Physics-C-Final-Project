@@ -7,6 +7,7 @@ public class Track {
   public int orientation; //0 is up, 1 is down
   public double angle;
   public int type;
+  public float springWidth;
   
   public Track(int x0, int x1,int  y0,int y1, int r, int t_type) {
     xstart = x0;
@@ -15,6 +16,7 @@ public class Track {
     yfinish = y1;
     type = t_type;
     radius = r;
+    springWidth = 10.0;
     //1 - straight, 2- curved, 3- loop, 4-spring
     if (t_type == 1) {
       angle = 0;

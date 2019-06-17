@@ -806,7 +806,7 @@ void updateCart(){
 
 void updateCartHorizontalSpring(){
   
-  Track currTrack = allTracks.get(currentTrackSim);
+  
   Track nextTrack = allTracks.get(currentTrackSim + 1);
   Track prevTrack = allTracks.get(currentTrackSim - 1);
   
@@ -854,7 +854,7 @@ void updateCartHorizontal(){
   if(!(( cart.xcor  < max(currTrack.xfinish, currTrack.xstart) && vels[0] > 0) || ( cart.xcor > min(currTrack.xfinish, currTrack.xstart) && vels[0] < 0))){
     cart.angle = 0;
   }
-  if (     (cart.xvel > 0 && cart.xcor >= currTrack.xfinish ) || (cart.xvel < 0 && cart.xcor <= currTrack.xfinish)   ) {
+  if ((cart.xvel > 0 && cart.xcor >= currTrack.xfinish ) || (cart.xvel < 0 && cart.xcor <= currTrack.xfinish)) {
      currentTrackSim++;
   }
   //System.out.println(cart.xvel + " : " + cart.yvel);
@@ -894,6 +894,7 @@ void updateCartCurved(){
       }
       start ++;
       cart.angle = 0;
+      angle = 0;
     }
     else if( x < a ){
       System.out.println("on the left arc!");
@@ -942,6 +943,7 @@ void updateCartCurved(){
       }
       start ++;
       cart.angle = 0;
+      angle = 0;
     }
     else if( x < a + 10 ){
       System.out.println("on the left arc!");
@@ -980,8 +982,16 @@ void updateCartCurved(){
     b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
     angle = asin((a-x1)/d);
     
+    
     float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
     float x = cart.xcor, y = cart.ycor;
+    
+    tempx = x2;
+    tempy = y2;
+    x2 = x1;
+    y2 = y1;
+    x1 = tempx;
+    y1 = tempy;
     
     if(x < x2){
       if (start <= 1) {
@@ -992,20 +1002,24 @@ void updateCartCurved(){
       }
       start ++;
       cart.angle = 0;
+      angle = 0;
     }
-    else if( x < a1 ){
+    else if( x < a ){
       System.out.println("on the left arc!");
       float r = (y2 - y1) / 3;
-      angle = -1*(float)Math.atan((cart.xcor-x2) / (y - y2 + r));
+      angle = 1*(float)Math.atan((cart.xcor-x2) / (y - y2 + r));
       cart.angle = angle;
     }
-    else if(y < b){
+    else if(y < b1){
+      System.out.println("right arc!");
       float r = (y2 - y1) / 3;
-      angle = -1*atan((x1 - x) / (y1 + r - y));
+      angle = 1*atan((x1 - x) / (y1 + r - y));
       cart.angle = angle;
     }
     else{
       System.out.println("in the middle!");
+      //cart.angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+      //angle = cart.angle;
     }
     
     float vel = cart.calcVelFromKinetic(cart.ycor);
@@ -1015,7 +1029,7 @@ void updateCartCurved(){
     cart.ycor += cart.yvel / 10;
     
   }
-  else if(y1 > y2 && x1 > x2){ //WORKS
+  else if(y1 > y2 && x1 > x2){ //Bottom right to top left
     float d = (y1-y2)/3.0, u = y2 + d, v = (3*y2) + (2*d) + y1, w = (y2 + y1)*(y2 + d), j = (3*x2) + x1, k = (x2*x2) + (x1*x2);
     float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x2*x2) + k, i = (4*u) - v, l = (4*x2) - j;
     float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x2), o = (h*h) - (i*i*d*d) + (i*i*x2*x2);
@@ -1026,7 +1040,6 @@ void updateCartCurved(){
     float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
     float x = cart.xcor, y = cart.ycor;
     
-    
     if(x < x2){
       if (start <= 1) {
         currentTrackSim = 0;
@@ -1036,32 +1049,34 @@ void updateCartCurved(){
       }
       start ++;
       cart.angle = 0;
+      angle = 0;
     }
-    else if( x < a1 ){
+    else if( x < a ){
       System.out.println("on the left arc!");
       float r = (y1 - y2) / 3;
-      angle = -1*(float)Math.atan((cart.xcor-x2) / (y - y2 + r));
+      angle = -1*(float)Math.atan((x-x2) / (y2 + r - y));
+      System.out.println("left arc angle: " + angle);
       cart.angle = angle;
     }
-    else if(y > b){
-      float r = (y2 - y1) / 3;
-      angle = -1*atan((x1 - x) / (y - y1 + r));
+    else if(y > b1){
+      float r = (y1 - y2) / 3;
+      angle = -1*atan((x1 - x) / (y - (y1 - r)));
       cart.angle = angle;
     }
-    else{
+    else if(x >= a && y <= b1){
+      cart.angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+      angle = cart.angle;
       System.out.println("in the middle!");
     }
-    
     float vel = cart.calcVelFromKinetic(cart.ycor);
+    System.out.println("before xvel: " + cart.xvel + " angle: " + angle + " vel:" + vel);
     cart.xvel = -1*cos(angle) * (vel);
+    System.out.println("after xvel: " + cart.xvel + " angle: " + angle);
     cart.yvel = -1*Math.abs(sin(angle) * (vel));
     cart.xcor += cart.xvel / 10;
     cart.ycor += cart.yvel / 10;
-  }
-  
-  
-
-  
+    //System.out.println(cart.xvel);
+  }  
 }
 
 void updateCartLoop(){
@@ -1076,7 +1091,7 @@ void updateCartLoop(){
   System.out.println(xcenter + ", " + ycenter + ", " + x + ", " + y);
   if(goingRight){
     if(!loopCompleted && x >= xcenter && y >= ycenter){
-      angle = -1*(float)Math.atan((x-xcenter) / (y - ycenter));
+      angle = 1*(float)Math.atan((x-xcenter) / (y - ycenter));
       cart.angle = angle;
       
       
@@ -1103,7 +1118,7 @@ void updateCartLoop(){
       
     }
     else if(x < xcenter && y < ycenter){
-      angle = -1*(float)Math.atan((xcenter-x) / (ycenter - y));
+      angle = 1*(float)Math.atan((xcenter-x) / (ycenter - y));
       cart.angle = angle;
       
       
@@ -1132,7 +1147,7 @@ void updateCartLoop(){
     }
   }
   else{
-    if(x <= xcenter && y >= ycenter ){
+    if(!loopCompleted && x <= xcenter && y >= ycenter ){
       angle = -1*(float)Math.atan((xcenter-x) / (y - ycenter));
       cart.angle = angle;
       
@@ -1144,7 +1159,7 @@ void updateCartLoop(){
       cart.ycor += cart.yvel / 10;
     }
     else if(x <= xcenter && y < ycenter){
-      angle = -1*(float)Math.atan((xcenter-x) / (ycenter - y));
+      angle = 1*(float)Math.atan((xcenter-x) / (ycenter - y));
       cart.angle = angle;
       
       
@@ -1166,7 +1181,7 @@ void updateCartLoop(){
       cart.ycor += cart.yvel / 10;
     }
     else if(x > xcenter && y >= ycenter){
-      angle = -1*(float)Math.atan((x-xcenter) / (y - ycenter));
+      angle = 1*(float)Math.atan((x-xcenter) / (y - ycenter));
       cart.angle = angle;
       
       

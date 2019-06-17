@@ -837,6 +837,7 @@ void updateCart(){
   else if(type == 4){
     updateCartSpring();
   }
+  cart.calcKinetic();
   
   //System.out.println(cart.ycor);
   //float vel = cart.calcVelFromKinetic(cart.ycor);

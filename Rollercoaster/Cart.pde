@@ -42,9 +42,14 @@ public class Cart {
     return ret_arr;
   }
 
-  float calcTangVel(float y){
-     kinetic = mass * yaccel * (y - ht);
+  void calcKinetic() {
+    float vel = (cart.xvel * cart.xvel) + (cart.yvel * cart.yvel);
+    kinetic = 0.5 * mass * (vel * vel);
+  }
 
+  float calcTangVel(float y){
+     //kinetic = mass * yaccel * (y - ht);
+    calcKinetic();
     return sqrt(2 * yaccel * (y-ht));
   }
   /*
@@ -60,7 +65,8 @@ public class Cart {
   
   
   float calcVelFromKinetic(float y) {
-    kinetic = mass * yaccel * (y - ht);
+    //kinetic = mass * yaccel * (y - ht);
+    calcKinetic();
     return sqrt(2 * yaccel * (y-ht));
   }
 }

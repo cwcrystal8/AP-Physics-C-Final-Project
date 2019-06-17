@@ -1310,9 +1310,10 @@ void runHowToPlay(){
   colorMode(HSB,360,100,100);
   background(200, 18, 100);
   colorMode(RGB,255,255,255);
-  textAlign(CENTER, CENTER);
+  textAlign(LEFT, CENTER);
   fill(0);
-  text("1. Press \"Start Drawing.\"\n2. Double-click the track you would like to draw, and follow the instructions in the text box.\n  * Note: You MUST start each new track at the end of the previous track.\n3. Click \"Clear\" if you would like to start over.\n4. Click \"Done\" if you're done designing and you want to see the simulation.\n5. Click \"Back\" if you want to modify your design.", width/2, height/2);
+  textSize(28);
+  text("1. Press \"Start Drawing.\"\n2. Double-click the track you would like to draw, and follow the instructions in the text box.\n  * Note: You MUST start each new track at the end of the previous track.\n3. Click \"Clear\" if you would like to start over.\n4. Click \"Done\" if you're done designing and you want to see the simulation.\n5. Click \"Back\" if you want to modify your design.", 50, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
     fill(252,143,161);

@@ -30,6 +30,8 @@ int currentTrackSim = 0;
 int start = 0;
 boolean loopCompleted = false;
 Graph graph;
+boolean paused = false;
+String pauseText = "Pause";
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
@@ -161,6 +163,7 @@ void runBuildStage(){
   //Mouse functions to highlight
   checkMouseOnButton();
   checkMouseOnDone();
+  checkMouseOnClear();
   checkMouseOnTrack();
   
   displayCart();
@@ -220,6 +223,23 @@ void checkMouseOnDone(){
   text("Done", (x_left + x_right) / 2, (y_top + y_bottom) / 2);
 }
 
+void checkMouseOnClear(){
+  int x_left = gap, x_right = gap + doneWidth, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;  
+  if(mouseY > y_top && mouseY < y_bottom && mouseX > x_left && mouseX < x_right){
+    fill(255,108,224);
+    stroke(255,108,224);
+  }
+  else{
+    fill(255,178,238);
+    stroke(255,178,238);
+  }
+  strokeWeight(1);
+  rect(x_left, y_top, x_right - x_left, y_bottom - y_top, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text("Clear", (x_left + x_right) / 2, (y_top + y_bottom) / 2);
+}
+
 void checkMouseOnTrack(){
   int x = mouseX, y = mouseY;
   if(allTracks.size() > 0 && trackConfirmed){
@@ -243,7 +263,7 @@ void generateScreen(){
 }
 
 void generateTextWindow(){
-  int x_left = gap, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
+  int x_left = gap + doneWidth + 5, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
   fill(255,178,238);
   stroke(255,178,238);
   strokeWeight(1);
@@ -367,7 +387,7 @@ void buildLoop(int x, int y){
       Track prev = allTracks.get(allTracks.size() - 1);
       int xfinish = prev.xfinish, yfinish = prev.yfinish;
       if(x > xfinish - 10 && x < xfinish + 10 && y > yfinish - 10 && y < yfinish + 10){
-        if(prev.type == 2 || prev.type == 3){
+        if(prev.type == 3 || prev.type == 4){
           displayedText = "Error: Loop cannot be added onto another loop or a spring!";
         }
         else{
@@ -731,6 +751,23 @@ void runSimulation(){
   colorMode(RGB,255,255,255);
   textAlign(CENTER, CENTER);
   fill(0);
+  strokeWeight(1);
+  //text("Simulation to come", width/2, height/2);
+  
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart - 5 - buttonHeight && mouseY < buttonHeightStart - 5){
+    fill(252,143,161);
+    stroke(252,143,161);
+  }
+  else{
+    fill(255,182,193);
+    stroke(255,182,193); 
+  }
+  rect(gap, buttonHeightStart - 5 - buttonHeight, 300, buttonHeight, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text(pauseText, 150 + gap, (buttonHeightStart + buttonHeightStart - 10 - buttonHeight)/2);
+  
+  fill(0);
   //text("Simulation to come", width/2, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight){
@@ -745,13 +782,17 @@ void runSimulation(){
   fill(255);
   textAlign(CENTER, CENTER);
   text("Back", 150 + gap, (buttonHeight + buttonHeightStart + buttonHeightStart)/2);
+  
+  
   generateScreen();
   displayCart();
-  if(currentTrackSim < allTracks.size()){
+  if(currentTrackSim < allTracks.size() && !paused){
     updateCart();
   }
+  graph.drawGraph();
   displayPoints();
   displayTracks();
+  displayStats();
 }
 
 void displayCart(){
@@ -1253,11 +1294,10 @@ void updateCartSpring(){
       cart.xvel += accel;
       cart.xcor += cart.xvel / 10;
     }
-  }
-   
-  
-  
-  
+  } 
+}
+
+void displayStats(){
   
 }
 
@@ -1275,9 +1315,10 @@ void runHowToPlay(){
   colorMode(HSB,360,100,100);
   background(200, 18, 100);
   colorMode(RGB,255,255,255);
-  textAlign(CENTER, CENTER);
+  textAlign(LEFT, CENTER);
   fill(0);
-  text("Instructions to come\nHere they come!!\nSike lol", width/2, height/2);
+  textSize(28);
+  text("1. Press \"Start Drawing.\"\n2. Double-click the track you would like to draw, and follow the instructions in the text box.\n  * Note: You MUST start each new track at the end of the previous track.\n3. Click \"Clear\" if you would like to start over.\n4. Click \"Done\" if you're done designing and you want to see the simulation.\n5. Click \"Back\" if you want to modify your design.", 50, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
     fill(252,143,161);
@@ -1355,11 +1396,21 @@ void buildPageMouseAction(){
     currentPage = 2;
     currentTrack = 0;
   }
+  else if(mouseY > 700 - gap - buttonHeight - 5 - buttonHeight && mouseY < 700 - gap - buttonHeight - 5 && mouseX > gap && mouseX < gap + doneWidth){
+    allTracks = new ArrayList<Track>();
+    allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 110 + gap, 0, 5));
+    pointsToDisplay = new ArrayList<int[]>();
+    currentTrack = 0;
+    trackConfirmed = false;
+    currentPrompt = 0;
+    currentTrackSim = 0;
+    start = 0;
+  }
   
 }
 
 void updateTextWindow(){
-  int x_left = gap, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
+  int x_left = gap + doneWidth + 5, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
   textAlign(CENTER, CENTER);
   fill(255);
   textSize(28);
@@ -1374,7 +1425,19 @@ void simulationPageMouseAction(){ //STILL NEEDS TO RESIZE
     makeCart();
     currentTrackSim = 0;
     start = 0;
+    paused = false;
   }
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart - 5 - buttonHeight && mouseY < buttonHeightStart - 5){
+    if(!paused){
+      pauseText = "Resume";
+    }
+    else{
+      pauseText = "Pause";
+    }
+    
+    paused = !paused;
+  }
+  graph.drawGraph();
 }
 
 void howToPlayMouseAction(){

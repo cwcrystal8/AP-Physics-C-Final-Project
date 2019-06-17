@@ -157,6 +157,7 @@ void runBuildStage(){
   //Mouse functions to highlight
   checkMouseOnButton();
   checkMouseOnDone();
+  checkMouseOnClear();
   checkMouseOnTrack();
   
   displayCart();
@@ -216,6 +217,23 @@ void checkMouseOnDone(){
   text("Done", (x_left + x_right) / 2, (y_top + y_bottom) / 2);
 }
 
+void checkMouseOnClear(){
+  int x_left = gap, x_right = gap + doneWidth, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;  
+  if(mouseY > y_top && mouseY < y_bottom && mouseX > x_left && mouseX < x_right){
+    fill(255,108,224);
+    stroke(255,108,224);
+  }
+  else{
+    fill(255,178,238);
+    stroke(255,178,238);
+  }
+  strokeWeight(1);
+  rect(x_left, y_top, x_right - x_left, y_bottom - y_top, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text("Clear", (x_left + x_right) / 2, (y_top + y_bottom) / 2);
+}
+
 void checkMouseOnTrack(){
   int x = mouseX, y = mouseY;
   if(allTracks.size() > 0 && trackConfirmed){
@@ -239,7 +257,7 @@ void generateScreen(){
 }
 
 void generateTextWindow(){
-  int x_left = gap, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
+  int x_left = gap + doneWidth + 5, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
   fill(255,178,238);
   stroke(255,178,238);
   strokeWeight(1);
@@ -1351,11 +1369,21 @@ void buildPageMouseAction(){
     currentPage = 2;
     currentTrack = 0;
   }
+  else if(mouseY > 700 - gap - buttonHeight - 5 - buttonHeight && mouseY < 700 - gap - buttonHeight - 5 && mouseX > gap && mouseX < gap + doneWidth){
+    allTracks = new ArrayList<Track>();
+    allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 110 + gap, 0, 5));
+    pointsToDisplay = new ArrayList<int[]>();
+    currentTrack = 0;
+    trackConfirmed = false;
+    currentPrompt = 0;
+    currentTrackSim = 0;
+    start = 0;
+  }
   
 }
 
 void updateTextWindow(){
-  int x_left = gap, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
+  int x_left = gap + doneWidth + 5, x_right = 1400 - gap - doneWidth - 5, y_top = 700 - gap - buttonHeight - 5 - buttonHeight, y_bottom = 700 - gap - buttonHeight - 5;
   textAlign(CENTER, CENTER);
   fill(255);
   textSize(28);

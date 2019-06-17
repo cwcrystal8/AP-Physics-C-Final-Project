@@ -63,7 +63,7 @@ public class Graph {
     //stroke(255);
     text(title, starting_x + ((1400 - starting_x) / 2), starting_y - 10);
     textSize(10);
-    String s = ((int)max_var / 120) + "";
+    String s = ((int)max_var / 12) + "";
     text(s, starting_x - 15, draw_y - (max_var * height_constant));
     textSize(28);
   }

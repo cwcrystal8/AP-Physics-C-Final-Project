@@ -43,6 +43,8 @@ public class Cart {
   }
 
   float calcTangVel(float y){
+     kinetic = mass * yaccel * (y - ht);
+
     return sqrt(2 * yaccel * (y-ht));
   }
   /*
@@ -58,6 +60,7 @@ public class Cart {
   
   
   float calcVelFromKinetic(float y) {
+    kinetic = mass * yaccel * (y - ht);
     return sqrt(2 * yaccel * (y-ht));
   }
 }

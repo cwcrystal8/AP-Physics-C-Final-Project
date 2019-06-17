@@ -29,18 +29,20 @@ Cart cart;
 int currentTrackSim = 0;
 int start = 0;
 boolean loopCompleted = false;
+Graph graph;
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
 void setup(){
   size(1400,700);
-  frameRate(240);
+  frameRate(300);
   currentPage = 0;
   currentTrack = 0;
   myFont = createFont("Century", 32);
   textFont(myFont);
   allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 110 + gap, 0, 5));
   makeCart();
+  graph = new Graph("Kinetic Energy Graph (J/tick)", "X-Coordinate", "Kinetic Energy");
 }
 
 void makeCart(){
@@ -70,6 +72,8 @@ void draw(){
     runBuildStage();
   }
   else if(currentPage == 2){
+    surface.setResizable(true);
+  surface.setSize(1400, 850);
     runSimulation();
   }
   else{
@@ -145,7 +149,7 @@ void runBuildStage(){
   colorMode(HSB,360,100,100);
   background(200, 18, 100);
   colorMode(RGB,255,255,255);
-  
+  graph.data = new ArrayList<float[]>();
   
   //Display
   generateScreen();
@@ -742,7 +746,6 @@ void runSimulation(){
   textAlign(CENTER, CENTER);
   text("Back", 150 + gap, (buttonHeight + buttonHeightStart + buttonHeightStart)/2);
   generateScreen();
-  
   displayCart();
   if(currentTrackSim < allTracks.size()){
     updateCart();
@@ -768,6 +771,7 @@ void displayCart(){
 void updateCart(){
   //System.out.println((cart.yvel * cart.yvel) + (cart.xvel * cart.xvel));
   Track currTrack = allTracks.get(currentTrackSim);
+  graph.update(cart.xcor, cart.kinetic);
   //if(start > 1){
   //  cart.xcor = currTrack.xstart + 1;
    // cart.ycor = currTrack.ystart - 10;
@@ -822,7 +826,7 @@ void updateCartHorizontalSpring(){
   cart.angle = 0;
   cart.yvel = 0;
   if((( cart.xcor + 10 < nextTrack.xfinish && cart.xvel > 0) || ( cart.xcor > nextTrack.xfinish && cart.xvel < 0))){
-    System.out.println("calling horizontal spring! " + cart.xvel);
+    //System.out.println("calling horizontal spring! " + cart.xvel);
     cart.angle = 0;
   }
   else if ((  cart.xvel > 0 &&   cart.xcor + 10 >= nextTrack.xfinish) || ( cart.xvel < 0 && cart.xcor - 10 <= nextTrack.xfinish        )){

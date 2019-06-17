@@ -24,22 +24,26 @@ ArrayList<int[]> pointsToDisplay = new ArrayList<int[]>();
 int currentPrompt = 0;
 ArrayList<Track> allTracks = new ArrayList<Track>(); 
 int[] info = new int[4];
-int springWidth = 10;
+float springWidth = 10;
 Cart cart;
 int currentTrackSim = 0;
 int start = 0;
-
+boolean loopCompleted = false;
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
 void setup(){
   size(1400,700);
-  frameRate(120);
+  frameRate(240);
   currentPage = 0;
   currentTrack = 0;
   myFont = createFont("Century", 32);
   textFont(myFont);
   allTracks.add(new Track(0 + gap, 100 + gap, 0 + gap, 110 + gap, 0, 5));
+  makeCart();
+}
+
+void makeCart(){
   Track first = allTracks.get(0);
   int x = (first.xstart + first.xfinish) / 2, y = (first.ystart + first.yfinish) / 2;
   float ang = calculateCurvedTrackAngle(first);
@@ -359,12 +363,18 @@ void buildLoop(int x, int y){
       Track prev = allTracks.get(allTracks.size() - 1);
       int xfinish = prev.xfinish, yfinish = prev.yfinish;
       if(x > xfinish - 10 && x < xfinish + 10 && y > yfinish - 10 && y < yfinish + 10){
-        info[0] = xfinish;
-        info[1] = yfinish;
-        int[] new_info = {xfinish, yfinish, 10};
-        pointsToDisplay.add(new_info);
-        currentPrompt++;
-        displayedText = tracks[currentTrack - 1] + ": " + instructions[1];  
+        if(prev.type == 2 || prev.type == 3){
+          displayedText = "Error: Loop cannot be added onto another loop or a spring!";
+        }
+        else{
+          info[0] = xfinish;
+          info[1] = yfinish;
+          int[] new_info = {xfinish, yfinish, 10};
+          pointsToDisplay.add(new_info);
+          currentPrompt++;
+          displayedText = tracks[currentTrack - 1] + ": " + instructions[1];
+        }
+          
       }
       else{
         displayedText = "Error: Starting point must be the ending point of the last track you placed";
@@ -392,7 +402,7 @@ void buildLoop(int x, int y){
       currentPrompt = 0;
       displayedText = "Loop added! Please select another track or click Done";
       currentPrompt++;
-      allTracks.add(new Track (info[0], info[0], info[1], info[1], info[3] - info[1], 3));
+      allTracks.add(new Track (info[0], info[0], info[1], info[1], info[1] - info[3], 3));
     }
     else{
       displayedText = "Error: center must be above the starting point";
@@ -434,17 +444,23 @@ void buildSpring(int x, int y){
     else if(currentPrompt == 1){
       if(abs(xfinish - prev.xstart) > abs(x - info[0])){
         if((xfinish - prev.xstart) * (x - info[0]) < 0){
-          info[2] = x;
-          info[3] = info[1];
-          currentTrack = 0;
-          int[] new_info = {info[2], info[3], 10};
-          pointsToDisplay.add(new_info);
-          trackToConfirm = 0;
-          trackConfirmed = false;
-          currentPrompt = 0;
-          displayedText = "Spring added! Please select another track or click Done";
-          currentPrompt++;
-          allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 4));
+          if(Math.abs(x - info[0]) > 10){
+            info[2] = x;
+            info[3] = info[1];
+            currentTrack = 0;
+            int[] new_info = {info[2], info[3], 10};
+            pointsToDisplay.add(new_info);
+            trackToConfirm = 0;
+            trackConfirmed = false;
+            currentPrompt = 0;
+            displayedText = "Spring added! Please select another track or click Done";
+            currentPrompt++;
+            allTracks.add(new Track (info[0], info[2], info[1], info[3], 0, 4));
+          }
+          else{
+            displayedText = "Error: Spring must be more than ten pixels long";
+          }
+          
         }
         else{
           displayedText = "Error: Spring must be in the same direction as the horizontal track it hovers above";
@@ -500,7 +516,8 @@ void display(Track obj){
     displayLoop(obj);
   }
   else if (type == 4) {
-    displaySpring(obj, springWidth);
+    int n = Math.abs((obj.xfinish - obj.xstart) / 10);
+    displaySpring(obj, n);
   }
   else if(type == 5){
     displayStartingPlatform(obj);
@@ -592,20 +609,22 @@ void displayLoop(Track obj){
   strokeWeight(4);
   float x1 = obj.xstart, y1 = obj.ystart, r = obj.radius;
   noFill();
-  ellipse(x1,y1 + r, 2 * r, 2 * r);
+  ellipse(x1,y1 - r, 2 * r, 2 * r);
   fill(0);
   ellipse(obj.xfinish, obj.yfinish, 10, 10);
 }
 
-void displaySpring(Track obj, int xwidth){
+void displaySpring(Track obj, int n){
   int x1 = obj.xstart, y = obj.ystart, x2 = obj.xfinish;
-  for(int i = min(x1, x2); i < max(x1,x2); i += xwidth ){
+  int direction = (x2 - x1) / Math.abs(x2 - x1);
+  //System.out.println(direction);
+  for(int i = 0; i < n; i++){
     //System.out.println(i);
     noFill();
     strokeWeight(4);
     beginShape();
-    vertex(i,y);
-    quadraticVertex(i+xwidth/2, y - 100, i+xwidth, y);
+    vertex(x1 + i * (direction * obj.springWidth),y);
+    quadraticVertex(x1 + i * (direction * obj.springWidth)+ direction * obj.springWidth/2, y - 100, x1 + i * (direction * obj.springWidth)+ direction * obj.springWidth, y);
     endShape();
   }
   ellipse(obj.xfinish, obj.yfinish, 10, 10);
@@ -710,7 +729,7 @@ void runSimulation(){
   fill(0);
   //text("Simulation to come", width/2, height/2);
   
-  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight){
     fill(252,143,161);
     stroke(252,143,161);
   }
@@ -718,10 +737,12 @@ void runSimulation(){
     fill(255,182,193);
     stroke(255,182,193); 
   }
-  rect(gap, gap, 300, 100, buttonRadius);
+  rect(gap, buttonHeightStart, 300, buttonHeight, buttonRadius);
   fill(255);
   textAlign(CENTER, CENTER);
-  text("Back", 150 + gap, 50 + gap);
+  text("Back", 150 + gap, (buttonHeight + buttonHeightStart + buttonHeightStart)/2);
+  generateScreen();
+  
   displayCart();
   if(currentTrackSim < allTracks.size()){
     updateCart();
@@ -745,20 +766,33 @@ void displayCart(){
 }
 
 void updateCart(){
-  System.out.println((cart.yvel * cart.yvel) + (cart.xvel * cart.xvel));
+  //System.out.println((cart.yvel * cart.yvel) + (cart.xvel * cart.xvel));
   Track currTrack = allTracks.get(currentTrackSim);
+  //if(start > 1){
+  //  cart.xcor = currTrack.xstart + 1;
+   // cart.ycor = currTrack.ystart - 10;
+  //}
   int type = currTrack.type;
   float xvel = cart.xvel, yvel = cart.yvel;
   if(type == 1){
-    updateCartHorizontal();
+    if(currentTrackSim + 1 < allTracks.size() && (allTracks.get(currentTrackSim + 1)).type == 4){
+      updateCartHorizontalSpring();
+    }
+    else{
+      updateCartHorizontal();
+    }
+    
   }
   else if(type == 2 || type == 5){
     updateCartCurved();
   }
   else if(type == 3){
+    updateCartLoop();
   }
   else if(type == 4){
+    updateCartSpring();
   }
+  
   //System.out.println(cart.ycor);
   //float vel = cart.calcVelFromKinetic(cart.ycor);
   
@@ -770,32 +804,69 @@ void updateCart(){
     
 }
 
-void updateCartHorizontal(){
-  System.out.println("calling hjorizontal! " + cart.xvel);
-  Track currTrack = allTracks.get(currentTrackSim);
+void updateCartHorizontalSpring(){
+  
+  
+  Track nextTrack = allTracks.get(currentTrackSim + 1);
+  Track prevTrack = allTracks.get(currentTrackSim - 1);
+  
+  if(prevTrack.type == 3){
+    prevTrack = allTracks.get(currentTrackSim - 2);
+  }
+  
+  int direction = Math.abs(prevTrack.xfinish - prevTrack.xstart)/(prevTrack.xfinish - prevTrack.xstart);
+  
   //System.out.println(currTrack.type);
   float[] vels = cart.calcVel(cart.ycor);
   float xvel = cart.xvel, yvel = cart.yvel;
   cart.angle = 0;
   cart.yvel = 0;
-  if(!(( cart.xcor + 25  < max(currTrack.xfinish, currTrack.xstart) && vels[0] > 0) || ( cart.xcor - 25 > min(currTrack.xfinish, currTrack.xstart) && vels[0] < 0))){
+  if((( cart.xcor + 10 < nextTrack.xfinish && cart.xvel > 0) || ( cart.xcor > nextTrack.xfinish && cart.xvel < 0))){
+    System.out.println("calling horizontal spring! " + cart.xvel);
     cart.angle = 0;
   }
-  if (cart.xcor >= currTrack.xfinish) {
+  else if ((  cart.xvel > 0 &&   cart.xcor + 10 >= nextTrack.xfinish) || ( cart.xvel < 0 && cart.xcor - 10 <= nextTrack.xfinish        )){
      currentTrackSim++;
   }
   //System.out.println(cart.xvel + " : " + cart.yvel);
-  cart.xvel = cos(0) * cart.calcVelFromKinetic(cart.ycor);
+  cart.xvel = direction * cos(0) * cart.calcVelFromKinetic(cart.ycor);
   cart.xcor += cart.xvel / 10;
   cart.yvel = 0;
-  cart.ycor += cart.yvel / 10;
+}
+
+void updateCartHorizontal(){
+  System.out.println("calling horizontal! " + cart.xvel);
+  Track currTrack = allTracks.get(currentTrackSim);
+  Track prevTrack = allTracks.get(currentTrackSim - 1);
+  
+  if(prevTrack.type == 3){
+    prevTrack = allTracks.get(currentTrackSim - 2);
+  }
+  
+  int direction = Math.abs(prevTrack.xfinish - prevTrack.xstart)/(prevTrack.xfinish - prevTrack.xstart);
+  
+  
+  //System.out.println(currTrack.type);
+  float[] vels = cart.calcVel(cart.ycor);
+  float xvel = cart.xvel, yvel = cart.yvel;
+  cart.angle = 0;
+  cart.yvel = 0;
+  if(!(( cart.xcor  < max(currTrack.xfinish, currTrack.xstart) && vels[0] > 0) || ( cart.xcor > min(currTrack.xfinish, currTrack.xstart) && vels[0] < 0))){
+    cart.angle = 0;
+  }
+  if ((cart.xvel > 0 && cart.xcor >= currTrack.xfinish ) || (cart.xvel < 0 && cart.xcor <= currTrack.xfinish)) {
+     currentTrackSim++;
+  }
+  //System.out.println(cart.xvel + " : " + cart.yvel);
+  cart.xvel = direction*cos(0) * cart.calcVelFromKinetic(cart.ycor);
+  cart.xcor += cart.xvel / 10;
+  cart.yvel = 0;
 }
 
 void updateCartCurved(){
-  System.out.println("we're here!");
+  //System.out.println("we're here!");
   Track currTrack = allTracks.get(currentTrackSim);
-  int type = currTrack.type;
-  float xvel = cart.xvel, yvel = cart.yvel;
+  
   
   float a = 0,b = 0;
   float angle = 0;
@@ -810,9 +881,47 @@ void updateCartCurved(){
     a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
     b = y1 + d - sqrt((d*d) - ((a-x1)*(a-x1)));
     angle = asin((a-x1)/d);
+    System.out.println("angle: " + angle);
+    float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
+    float x = cart.xcor, y = cart.ycor;
     
+    if(x > x2){
+      if (start <= 1) {
+        currentTrackSim = 0;
+      }
+      else {
+        currentTrackSim ++;
+      }
+      start ++;
+      cart.angle = 0;
+      angle = 0;
+    }
+    else if( x < a ){
+      System.out.println("on the left arc!");
+      float r = (y2 - y1) / 3;
+      angle = -1*(float)Math.atan((cart.xcor-x1) / (y1 + r - cart.ycor));
+      System.out.println("angle: " + angle);
+      cart.angle = angle;
+    }
+    else if(y > b1){
+      float r = (y2 - y1) / 3;
+      angle = -1*atan((x2 - x) / (y - (y2 - ((y2 - y1) / 3))));
+      cart.angle = angle;
+    }
+    else{
+      System.out.println("in the middle!");
+    }
+    float vel = cart.calcVelFromKinetic(cart.ycor);
+    cart.xvel = cos(angle) * (vel);
+    cart.yvel = Math.abs(sin(angle) * (vel));
+    cart.xcor += cart.xvel / 10;
+    cart.ycor += cart.yvel / 10;
+    //THIS WORKS
   }
+  
+  
   else if(y1 > y2 && x1 < x2){//bottom left to top right
+  //THIS WORKS
     //System.out.println("this one");
     float d = (y1-y2)/3.0, u = y1 - d, v = (3*y1) - (2*d) + y2, w = (y1 + y2)*(y1 - d), j = (3*x1) + x2, k = (x1*x1) + (x1*x2);
     float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x1*x1) + k, i = v - (4*u), l = (4*x1) - j;
@@ -820,9 +929,47 @@ void updateCartCurved(){
     a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
     b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
     angle = asin((a-x1)/d);
+    
+    float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
+    float x = cart.xcor, y = cart.ycor;
         
+        
+    if(x > x2){
+      if (start <= 1) {
+        currentTrackSim = 0;
+      }
+      else {
+        currentTrackSim ++;
+      }
+      start ++;
+      cart.angle = 0;
+      angle = 0;
+    }
+    else if( x < a + 10 ){
+      System.out.println("on the left arc!");
+      float r = (y1 - y2) / 3;
+      angle = 1*(float)Math.atan((cart.xcor-x1) / (y1 + r - cart.ycor));
+      cart.angle = angle;
+    }
+    else if(y < b1){
+      float r = (y1 - y2) / 3;
+      angle = -1*atan((x2 - x) / (y - (y2 - ((y2 - y1) / 3))));
+      cart.angle = angle;
+    }
+    else{
+      System.out.println("in the middle!");
+    }
+    
+    float vel = cart.calcVelFromKinetic(cart.ycor);
+    cart.xvel = cos(angle) * (vel);
+    cart.yvel = -1*Math.abs(sin(angle) * (vel));
+    cart.xcor += cart.xvel / 10;
+    cart.ycor += cart.yvel / 10;
+    //THIS WORKS
+    
   }
   else if(y1 < y2 && x1 > x2){//top right to bottom left
+  
     float tempx = x2, tempy = y2;
     x2 = x1;
     y2 = y1;
@@ -834,8 +981,55 @@ void updateCartCurved(){
     a = ((-1 * n) + sqrt((n*n) - (4*m*o)))/(2*m);
     b = y1 - d + sqrt((d*d) - ((a-x1)*(a-x1)));
     angle = asin((a-x1)/d);
+    
+    
+    float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
+    float x = cart.xcor, y = cart.ycor;
+    
+    tempx = x2;
+    tempy = y2;
+    x2 = x1;
+    y2 = y1;
+    x1 = tempx;
+    y1 = tempy;
+    
+    if(x < x2){
+      if (start <= 1) {
+        currentTrackSim = 0;
+      }
+      else {
+        currentTrackSim ++;
+      }
+      start ++;
+      cart.angle = 0;
+      angle = 0;
+    }
+    else if( x < a ){
+      System.out.println("on the left arc!");
+      float r = (y2 - y1) / 3;
+      angle = 1*(float)Math.atan((cart.xcor-x2) / (y - y2 + r));
+      cart.angle = angle;
+    }
+    else if(y < b1){
+      System.out.println("right arc!");
+      float r = (y2 - y1) / 3;
+      angle = 1*atan((x1 - x) / (y1 + r - y));
+      cart.angle = angle;
+    }
+    else{
+      System.out.println("in the middle!");
+      //cart.angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+      //angle = cart.angle;
+    }
+    
+    float vel = cart.calcVelFromKinetic(cart.ycor);
+    cart.xvel = -1*cos(angle) * (vel);
+    cart.yvel = Math.abs(sin(angle) * (vel));
+    cart.xcor += cart.xvel / 10;
+    cart.ycor += cart.yvel / 10;
+    
   }
-  else if(y1 > y2 && x1 > x2){ //WORKS
+  else if(y1 > y2 && x1 > x2){ //Bottom right to top left
     float d = (y1-y2)/3.0, u = y2 + d, v = (3*y2) + (2*d) + y1, w = (y2 + y1)*(y2 + d), j = (3*x2) + x1, k = (x2*x2) + (x1*x2);
     float h = (2*u*u) + (2*d*d) - (u*v) + w - (2*x2*x2) + k, i = (4*u) - v, l = (4*x2) - j;
     float m = (l*l) + (i*i), n = (2*h*l) - (2*i*i*x2), o = (h*h) - (i*i*d*d) + (i*i*x2*x2);
@@ -843,58 +1037,230 @@ void updateCartCurved(){
     b = y2 + d - sqrt((d*d) - ((a-x2)*(a-x2)));
     angle = asin((a-x1)/d);
     
-  }
-  
-  float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
-  float velo = cart.calcTangVel(cart.ycor);
-  float x = cart.xcor, y = cart.ycor;
-  //System.out.println( "(" + x1 + "," + y1 + ")    (" + x2 + "," + y2 + ")");
-  //System.out.println("a: " + a + " b: " + b);
-  //System.out.println("x: " + x + " y: " + y);
-  if(x > x2){
-    if (start <= 1) {
-      currentTrackSim = 0;
+    float a1 = x1 + x2 - a, b1 = y1 + y2 - b;
+    float x = cart.xcor, y = cart.ycor;
+    
+    if(x < x2){
+      if (start <= 1) {
+        currentTrackSim = 0;
+      }
+      else {
+        currentTrackSim ++;
+      }
+      start ++;
+      cart.angle = 0;
+      angle = 0;
     }
-    else {
-      currentTrackSim ++;
+    else if( x < a ){
+      System.out.println("on the left arc!");
+      float r = (y1 - y2) / 3;
+      angle = -1*(float)Math.atan((x-x2) / (y2 + r - y));
+      System.out.println("left arc angle: " + angle);
+      cart.angle = angle;
     }
-    start ++;
-    cart.angle = 0;
-  }
-  else if( x < a ){
-    System.out.println("on the left arc!");
-    float r = (y2 - y1) / 3;
-    angle = -1*(float)Math.atan((cart.xcor-x1) / (y1 + r - cart.ycor));
-    cart.angle = angle;
-    
-    
-  }
-  else if(y > b1){
-    //System.out.println("x: " + x + " a1: " + a1);
-    
-    float r = (y2 - y1) / 3;
-    
-    
-    angle = -1*atan((x2 - x) / (y - (y2 - ((y2 - y1) / 3))));
-    cart.angle = angle;
-    
+    else if(y > b1){
+      float r = (y1 - y2) / 3;
+      angle = -1*atan((x1 - x) / (y - (y1 - r)));
+      cart.angle = angle;
+    }
+    else if(x >= a && y <= b1){
+      cart.angle = HALF_PI - calculateCurvedTrackAngle(currTrack);
+      angle = cart.angle;
+      System.out.println("in the middle!");
+    }
+    float vel = cart.calcVelFromKinetic(cart.ycor);
+    System.out.println("before xvel: " + cart.xvel + " angle: " + angle + " vel:" + vel);
+    cart.xvel = -1*cos(angle) * (vel);
+    System.out.println("after xvel: " + cart.xvel + " angle: " + angle);
+    cart.yvel = -1*Math.abs(sin(angle) * (vel));
+    cart.xcor += cart.xvel / 10;
+    cart.ycor += cart.yvel / 10;
+    //System.out.println(cart.xvel);
+  }  
+}
 
+void updateCartLoop(){
+  Track currTrack = allTracks.get(currentTrackSim);
+  float xcenter = currTrack.xstart, ycenter = currTrack.ystart - currTrack.radius;
+  float r = currTrack.radius;
+  float x = cart.xcor, y = cart.ycor;
+  float a = 0, b = 0, angle = 0;
+  
+  Track prevTrack = allTracks.get(currentTrackSim - 1);
+  boolean goingRight = prevTrack.xfinish - prevTrack.xstart > 0;
+  System.out.println(xcenter + ", " + ycenter + ", " + x + ", " + y);
+  if(goingRight){
+    if(!loopCompleted && x >= xcenter && y >= ycenter){
+      angle = 1*(float)Math.atan((x-xcenter) / (y - ycenter));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = cos(angle) * (vel);
+      cart.yvel = -1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+      //System.out.println(cart.angle);
+      //System.out.println(x + "," + y);
+    }
+    else if(x > xcenter && y <= ycenter){
+     // System.out.println("we out here!");
+      angle = -1*(float)Math.atan((x-xcenter) / (ycenter - y));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = -1*cos(angle) * (vel);
+      cart.yvel = -1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+      
+      
+    }
+    else if(x < xcenter && y < ycenter){
+      angle = 1*(float)Math.atan((xcenter-x) / (ycenter - y));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = -1*cos(angle) * (vel);
+      cart.yvel = 1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+    }
+    
+    else if(x < xcenter && y >= ycenter){
+      angle = -1*(float)Math.atan((xcenter-x) / (y - ycenter));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = 1*cos(angle) * (vel);
+      cart.yvel = 1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+      loopCompleted = true;
+    }
+    else{
+      currentTrackSim++;
+      loopCompleted = false;
+    }
   }
   else{
-    System.out.println("in ith emiddle!");
+    if(!loopCompleted && x <= xcenter && y >= ycenter ){
+      angle = -1*(float)Math.atan((xcenter-x) / (y - ycenter));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = -1*cos(angle) * (vel);
+      cart.yvel = -1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+    }
+    else if(x <= xcenter && y < ycenter){
+      angle = 1*(float)Math.atan((xcenter-x) / (ycenter - y));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = 1*cos(angle) * (vel);
+      cart.yvel = -1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+    }
+    else if(x > xcenter && y < ycenter){
+      angle = -1*(float)Math.atan((x-xcenter) / (ycenter - y));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = 1*cos(angle) * (vel);
+      cart.yvel = 1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+    }
+    else if(x > xcenter && y >= ycenter){
+      angle = 1*(float)Math.atan((x-xcenter) / (y - ycenter));
+      cart.angle = angle;
+      
+      
+      float vel = cart.calcVelFromKinetic(cart.ycor);
+      cart.xvel = -1*cos(angle) * (vel);
+      cart.yvel = 1*Math.abs(sin(angle) * (vel));
+      cart.xcor += cart.xvel / 10;
+      cart.ycor += cart.yvel / 10;
+      System.out.println(cart.angle);
+      loopCompleted = true;
+    }
+    else{
+      currentTrackSim++;
+      loopCompleted = false;
+    }
   }
-  float vel = cart.calcVelFromKinetic(cart.ycor);
-  cart.xvel = cos(angle) * (vel);
-  cart.yvel = Math.abs(sin(angle) * (vel));
-  cart.xcor += cart.xvel / 10;
-  cart.ycor += cart.yvel / 10;
+}
 
+
+void updateCartSpring(){
+  //int x1 = obj.xstart, y = obj.ystart, x2 = obj.xfinish;
+  //for(int i = min(x1, x2); i < max(x1,x2); i += xwidth ){
+  //  //System.out.println(i);
+  //  noFill();
+  //  strokeWeight(4);
+  //  beginShape();
+  //  vertex(i,y);
+  //  quadraticVertex(i+xwidth/2, y - 100, i+xwidth, y);
+  //  endShape();
+  //}
+  
+  float xright = cart.xcor + 10, xleft = cart.xcor - 10;
+  Track currTrack = allTracks.get(currentTrackSim);
+  float x1 = currTrack.xstart, y = currTrack.ystart, x2 = currTrack.xfinish;
+  
+  Track prevTrack = allTracks.get(currentTrackSim - 1);
+  int direction = prevTrack.xfinish - prevTrack.xstart;
+  
+  if(direction > 0){
+    if(xleft < x2 - 20){
+      currentTrackSim++;
+      currTrack.springWidth = 10;
+    }
+    else{
+      currTrack.springWidth = 10.0 * (x1 - xright) / (x1-x2);
+    
+      float xdiff = abs(x2 - xright), force = -.10*xdiff, accel = force/cart.mass;
+      
+      //System.out.println(accel);
+      cart.xvel += accel;
+      cart.xcor += cart.xvel / 10;
+    }
+    
+  }
+  else{
+    if(xright > x2 + 20){
+      currentTrackSim++;
+      currTrack.springWidth = 10;
+    }
+    else{
+      currTrack.springWidth = 10.0 * (xleft - x1) / (x2 - x1);
+      
+      float xdiff = abs(x2 - xleft), force = .10*xdiff, accel = force/cart.mass;
+      
+      cart.xvel += accel;
+      cart.xcor += cart.xvel / 10;
+    }
+  }
+   
+  
+  
+  
   
 }
 
-  float getYFromX(float cart_x, float arc_x, float arc_y_low, float arc_y_high) {
-    float r = (arc_y_low - arc_y_high) / 3;
-    return (arc_y_low - r + sqrt( (r*r) - ((cart_x - arc_x)*(cart_x - arc_x)) ));
+
+float getYFromX(float cart_x, float arc_x, float arc_y_low, float arc_y_high) {
+  float r = (arc_y_low - arc_y_high) / 3;
+  return (arc_y_low - r + sqrt( (r*r) - ((cart_x - arc_x)*(cart_x - arc_x)) ));
  }
 
 
@@ -997,10 +1363,13 @@ void updateTextWindow(){
 }
 
 void simulationPageMouseAction(){ //STILL NEEDS TO RESIZE
-  if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight){
     currentPage = 1;
     currentTrack = 0;
     trackToConfirm = 0;
+    makeCart();
+    currentTrackSim = 0;
+    start = 0;
   }
 }
 

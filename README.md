@@ -2,7 +2,7 @@
 Crystal Wang and Joshua Weiner
 
 ## What It Does
-Our project allows the user to build their own rollercoaster using horizontal tracks, curved tracks, loop-de-loops, and springs (to change the direction on the x-axis), then watch a small cart as it goes through the rollercoaster. The user can also view graphs of the kinetic energy, potential energy, etc. as the cart moves.
+Our project allows the user to build their own rollercoaster using horizontal tracks, curved tracks, loop-de-loops, and springs (to change the direction on the x-axis), then watch a small cart as it goes through the rollercoaster. The user can also view  a graph of the kinetic energy versus time as the cart moves.
 
 ## Instructions
 0. Download this repository and run `Rollercoaster.pde`. Press the "Play" button (triangle) in the upper-left of the window that opens.

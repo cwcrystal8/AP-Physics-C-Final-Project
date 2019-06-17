@@ -29,12 +29,14 @@ Cart cart;
 int currentTrackSim = 0;
 int start = 0;
 boolean loopCompleted = false;
+boolean paused = false;
+String pauseText = "Pause";
 
 //-------------------------------------MAIN FUNCTIONS-----------------------
 
 void setup(){
   size(1400,700);
-  frameRate(240);
+  frameRate(120);
   currentPage = 0;
   currentTrack = 0;
   myFont = createFont("Century", 32);
@@ -381,7 +383,7 @@ void buildLoop(int x, int y){
       Track prev = allTracks.get(allTracks.size() - 1);
       int xfinish = prev.xfinish, yfinish = prev.yfinish;
       if(x > xfinish - 10 && x < xfinish + 10 && y > yfinish - 10 && y < yfinish + 10){
-        if(prev.type == 2 || prev.type == 3){
+        if(prev.type == 3 || prev.type == 4){
           displayedText = "Error: Loop cannot be added onto another loop or a spring!";
         }
         else{
@@ -745,6 +747,23 @@ void runSimulation(){
   colorMode(RGB,255,255,255);
   textAlign(CENTER, CENTER);
   fill(0);
+  strokeWeight(1);
+  //text("Simulation to come", width/2, height/2);
+  
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart - 5 - buttonHeight && mouseY < buttonHeightStart - 5){
+    fill(252,143,161);
+    stroke(252,143,161);
+  }
+  else{
+    fill(255,182,193);
+    stroke(255,182,193); 
+  }
+  rect(gap, buttonHeightStart - 5 - buttonHeight, 300, buttonHeight, buttonRadius);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text(pauseText, 150 + gap, (buttonHeightStart + buttonHeightStart - 10 - buttonHeight)/2);
+  
+  fill(0);
   //text("Simulation to come", width/2, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart && mouseY < buttonHeightStart + buttonHeight){
@@ -759,14 +778,17 @@ void runSimulation(){
   fill(255);
   textAlign(CENTER, CENTER);
   text("Back", 150 + gap, (buttonHeight + buttonHeightStart + buttonHeightStart)/2);
+  
+  
   generateScreen();
   
   displayCart();
-  if(currentTrackSim < allTracks.size()){
+  if(currentTrackSim < allTracks.size() && !paused){
     updateCart();
   }
   displayPoints();
   displayTracks();
+  displayStats();
 }
 
 void displayCart(){
@@ -1267,11 +1289,10 @@ void updateCartSpring(){
       cart.xvel += accel;
       cart.xcor += cart.xvel / 10;
     }
-  }
-   
-  
-  
-  
+  } 
+}
+
+void displayStats(){
   
 }
 
@@ -1291,7 +1312,7 @@ void runHowToPlay(){
   colorMode(RGB,255,255,255);
   textAlign(CENTER, CENTER);
   fill(0);
-  text("Instructions to come\nHere they come!!\nSike lol", width/2, height/2);
+  text("1. Press \"Start Drawing.\"\n2. Double-click the track you would like to draw, and follow the instructions in the text box.\n  * Note: You MUST start each new track at the end of the previous track.\n3. Click \"Clear\" if you would like to start over.\n4. Click \"Done\" if you're done designing and you want to see the simulation.\n5. Click \"Back\" if you want to modify your design.", width/2, height/2);
   
   if(mouseX > gap && mouseX < gap + 300 && mouseY > gap && mouseY < gap + 100){
     fill(252,143,161);
@@ -1398,6 +1419,17 @@ void simulationPageMouseAction(){ //STILL NEEDS TO RESIZE
     makeCart();
     currentTrackSim = 0;
     start = 0;
+    paused = false;
+  }
+  if(mouseX > gap && mouseX < gap + 300 && mouseY > buttonHeightStart - 5 - buttonHeight && mouseY < buttonHeightStart - 5){
+    if(!paused){
+      pauseText = "Resume";
+    }
+    else{
+      pauseText = "Pause";
+    }
+    
+    paused = !paused;
   }
 }
 
